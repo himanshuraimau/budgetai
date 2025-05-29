@@ -4,8 +4,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { ShoppingBag, MessageSquare, Package, Settings, LogOut, Search } from "lucide-react"
+import { UserMenu } from "@/components/auth/user-menu"
+import { ShoppingBag, MessageSquare, Package, Settings, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useSession } from "next-auth/react"
 
 const navigation = [
   { name: "Chat", href: "/chat", icon: MessageSquare },
@@ -16,6 +18,7 @@ const navigation = [
 
 export function AppSidebar() {
   const pathname = usePathname()
+  const { data: session } = useSession()
 
   return (
     <div className="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-700 p-4 flex flex-col h-screen">
@@ -55,13 +58,12 @@ export function AppSidebar() {
           <ThemeToggle />
         </div>
 
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800"
-        >
-          <LogOut className="mr-3 h-5 w-5" />
-          Sign out
-        </Button>
+        {session?.user && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-slate-600 dark:text-slate-400">Account</span>
+            <UserMenu />
+          </div>
+        )}
       </div>
     </div>
   )
