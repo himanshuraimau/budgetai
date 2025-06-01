@@ -1,0 +1,116 @@
+# ShopAI - AI-Powered Shopping Assistant
+
+## Project Overview
+Next.js 15 e-commerce application with AI chat assistant, user authentication, and MongoDB backend. Built with TypeScript, Tailwind CSS, and shadcn/ui components.
+
+## Tech Stack
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Database**: MongoDB with Mongoose ODM
+- **AI**: OpenAI GPT integration
+- **Auth**: NextAuth.js
+- **State**: Zustand store + React Query
+- **UI**: Radix UI primitives, Lucide icons
+- **Forms**: React Hook Form + Zod validation
+
+## Architecture & Folder Structure
+
+### App Router Structure (`/app`)
+- `(marketing)/` - Landing page, pricing, features
+- `(auth)/` - Login, signup pages
+- `(app)/` - Main application (chat, orders, search, settings)
+- `api/` - API routes (auth, chat endpoints)
+
+### Key Directories
+- `/components` - Reusable UI components organized by feature
+- `/lib` - Utilities, DB connection, AI service, validation
+- `/hooks` - Custom React hooks (chat, mobile, toast)
+- `/types` - TypeScript type definitions
+- `/public` - Static assets
+
+## Component Organization
+Components follow feature-based structure:
+- `ui/` - Base shadcn/ui components (button, dialog, form, etc.)
+- `auth/` - Authentication components
+- `chat/` - Chat interface components
+- `layout/` - App layout components (sidebar, topbar)
+- `product/` - Product display and interaction
+- `orders/` - Order management
+- `providers/` - Context providers
+
+## Key Features
+
+### 1. AI Chat System
+- **Components**: `chat-container.tsx`, `message-bubble.tsx`, `chat-input.tsx`
+- **Backend**: `/api/chat/route.ts` with OpenAI integration
+- **State**: Zustand store (`/lib/store/chat.ts`)
+- **Data**: React Query hooks (`/hooks/use-chat.ts`)
+- **Types**: Message types (user/ai/system), product cards, sessions
+
+### 2. Authentication
+- NextAuth.js with credential and social providers
+- Auth guard components
+- User menu and session management
+
+### 3. Product System
+- Product grid, modal, search components
+- Add to cart functionality
+- Product recommendations via AI
+
+### 4. Order Management
+- Order history and tracking
+- Checkout modal with payment processing
+
+## Styling Conventions
+- **Theme**: Dark/light mode with CSS variables
+- **Colors**: HSL-based design system (primary, secondary, muted, etc.)
+- **Layout**: Flexbox and Grid with responsive design
+- **Components**: Consistent spacing (px-4, py-2, space-x-3)
+- **Typography**: Inter font, semantic text sizes
+
+## Database Schema
+- **ChatSession**: User chat sessions with messages
+- **Messages**: AI/user messages with optional product cards
+- **Users**: Authentication and profile data
+
+## State Management
+- **Global**: Zustand for chat state and persistence
+- **Server**: React Query for API caching and mutations
+- **Forms**: React Hook Form with Zod validation
+
+## API Patterns
+- RESTful endpoints under `/api`
+- Consistent error handling and logging
+- MongoDB integration with proper connection management
+- OpenAI integration for intelligent responses
+
+## Development Patterns
+- TypeScript strict mode
+- Component composition over inheritance
+- Custom hooks for shared logic
+- Consistent file naming (kebab-case)
+- Props interfaces for all components
+
+## Key Dependencies
+- UI: @radix-ui/*, lucide-react, tailwindcss
+- Data: @tanstack/react-query, zustand, mongoose
+- AI: openai
+- Forms: react-hook-form, zod
+- Auth: next-auth
+- Utils: clsx, tailwind-merge, date-fns
+
+## File Naming Conventions
+- Components: kebab-case (.tsx)
+- Hooks: use-* prefix
+- Types: descriptive names in types/
+- API routes: RESTful naming
+- Utilities: descriptive function names
+
+## Common Patterns
+- Server components by default, client components when needed
+- Error boundaries and loading states
+- Responsive design (mobile-first)
+- Accessibility considerations
+- Type safety throughout
+- Consistent component props interface pattern

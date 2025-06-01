@@ -35,7 +35,7 @@ export function MessageBubble({ message }: MessageBubbleProps) {
         )}
 
         <p className="text-xs text-muted mt-1">
-          {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </p>
       </div>
 

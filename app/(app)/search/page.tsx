@@ -13,41 +13,28 @@ export default function SearchPage() {
   const handleSearch = async (query: string, filters: any) => {
     setIsLoading(true)
 
-    // Simulate search delay
-    await new Promise((resolve) => setTimeout(resolve, 500))
+    try {
+      const response = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query, filters }),
+      })
 
-    let results = mockProducts
+      if (!response.ok) {
+        throw new Error('Search failed')
+      }
 
-    // Filter by search query
-    if (query) {
-      results = results.filter(
-        (product) =>
-          product.title.toLowerCase().includes(query.toLowerCase()) ||
-          product.description.toLowerCase().includes(query.toLowerCase()) ||
-          product.category.toLowerCase().includes(query.toLowerCase()),
-      )
+      const data = await response.json()
+      setSearchResults(data.products)
+    } catch (error) {
+      console.error('Search error:', error)
+      // Fallback to mock data on error
+      setSearchResults(mockProducts)
+    } finally {
+      setIsLoading(false)
     }
-
-    // Filter by category
-    if (filters.category) {
-      results = results.filter((product) => product.category === filters.category)
-    }
-
-    // Filter by price range
-    if (filters.priceRange) {
-      const [min, max] = filters.priceRange.includes("Under")
-        ? [0, 100]
-        : filters.priceRange.includes("$100-$500")
-          ? [100, 500]
-          : filters.priceRange.includes("$500-$1000")
-            ? [500, 1000]
-            : [1000, Number.POSITIVE_INFINITY]
-
-      results = results.filter((product) => product.price >= min && product.price <= max)
-    }
-
-    setSearchResults(results)
-    setIsLoading(false)
   }
 
   return (
