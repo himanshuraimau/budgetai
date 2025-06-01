@@ -30,6 +30,3 @@ export interface LoginRequest {
   password: string
 }
 
-export * from "./product"
-export * from "./chat"
-export * from "./order"
