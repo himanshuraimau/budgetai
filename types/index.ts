@@ -1,32 +1,71 @@
-export interface User {
+// User types
+export type UserRole = "admin" | "employee"
+export type User = {
   id: string
   email: string
   name: string
-  avatar?: string
-  createdAt: Date
-  preferences?: UserPreferences
+  role: UserRole
+  companyId: string
+  departmentId?: string
+  onboardingCompleted: boolean
 }
 
-export interface UserPreferences {
-  theme: "light" | "dark"
-  currency: "USD" | "USDC"
-  notifications: boolean
-}
-
-export interface AuthUser {
+// Company types
+export type Company = {
   id: string
-  email: string
   name: string
+  size: "1-10" | "11-50" | "51-200" | "200+"
+  industry: "Tech" | "Finance" | "Healthcare" | "Retail" | "Other"
+  adminId: string
+  createdAt: string
 }
 
-export interface RegisterRequest {
+// Department types
+export type Department = {
+  id: string
+  companyId: string
   name: string
-  email: string
-  password: string
+  monthlyBudget: number
+  currentSpent: number
+  employeeCount: number
 }
 
-export interface LoginRequest {
-  email: string
-  password: string
+// Request types
+export type RequestStatus = "pending" | "approved" | "denied"
+export type PurchaseRequest = {
+  id: string
+  employeeId: string
+  departmentId: string
+  amount: number
+  description: string
+  category: string
+  justification?: string
+  status: RequestStatus
+  aiDecisionReason?: string
+  submittedAt: string
+  processedAt?: string
 }
 
+// Onboarding types
+export type OnboardingStep = 1 | 2 | 3 | 4 | 5
+
+export type CompanySetup = {
+  name: string
+  size: "1-10" | "11-50" | "51-200" | "200+"
+  industry: "Tech" | "Finance" | "Healthcare" | "Retail" | "Other"
+}
+
+export type DepartmentSetup = {
+  id: string
+  name: string
+  monthlyBudget: number
+}
+
+export type OnboardingData = {
+  currentStep: OnboardingStep
+  userRole: UserRole
+  companySetup: CompanySetup | null
+  departments: DepartmentSetup[]
+  paymanConnected: boolean
+  inviteCode?: string
+}
