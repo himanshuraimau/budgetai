@@ -4,20 +4,45 @@ import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useOnboardingStore } from "@/lib/store"
+import { useOnboardingAPI } from "@/hooks/use-onboarding-api"
+import { toast } from "sonner"
 
 export function JoinCompanyStep() {
   const { setInviteCode } = useOnboardingStore()
+  const { completeJoinCompany, isLoading } = useOnboardingAPI()
   const [activeTab, setActiveTab] = useState("invite")
   const [inviteCode, setInviteCodeState] = useState("")
   const [companyName, setCompanyName] = useState("")
   const [message, setMessage] = useState("")
+  const [isJoining, setIsJoining] = useState(false)
 
   const handleInviteCodeChange = (code: string) => {
     setInviteCodeState(code)
     setInviteCode(code)
+  }
+
+  const handleJoinWithCode = async () => {
+    if (!inviteCode.trim()) {
+      toast.error("Please enter an invite code")
+      return
+    }
+
+    setIsJoining(true)
+    try {
+      const result = await completeJoinCompany(inviteCode)
+      if (result) {
+        toast.success("Successfully joined company!")
+      }
+    } catch (error) {
+      console.error('Error joining company:', error)
+      toast.error("Failed to join company. Please check your invite code.")
+    } finally {
+      setIsJoining(false)
+    }
   }
 
   return (
@@ -49,6 +74,13 @@ export function JoinCompanyStep() {
                     Your company admin can provide you with an invite code.
                   </p>
                 </div>
+                <Button 
+                  onClick={handleJoinWithCode}
+                  disabled={!inviteCode.trim() || isJoining || isLoading}
+                  className="w-full"
+                >
+                  {isJoining ? "Joining..." : "Join Company"}
+                </Button>
               </div>
             </CardContent>
           </Card>

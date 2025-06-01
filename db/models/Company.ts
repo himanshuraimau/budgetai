@@ -37,4 +37,4 @@ const CompanySchema = new Schema<ICompany>(
   }
 );
 
-export const Company = mongoose.model<ICompany>('Company', CompanySchema); 
+export const Company = mongoose.models?.Company as mongoose.Model<ICompany> || mongoose.model<ICompany>('Company', CompanySchema); 

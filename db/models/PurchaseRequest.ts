@@ -70,4 +70,4 @@ const PurchaseRequestSchema = new Schema<IPurchaseRequest>(
   }
 );
 
-export const PurchaseRequest = mongoose.model<IPurchaseRequest>('PurchaseRequest', PurchaseRequestSchema); 
+export const PurchaseRequest = (mongoose.models?.PurchaseRequest || mongoose.model<IPurchaseRequest>('PurchaseRequest', PurchaseRequestSchema)) as mongoose.Model<IPurchaseRequest>; 

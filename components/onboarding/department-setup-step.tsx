@@ -1,17 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { PlusCircle, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useOnboardingStore } from "@/lib/store"
+import { useOnboardingAPI } from "@/hooks/use-onboarding-api"
+import { toast } from "sonner"
 import type { DepartmentSetup } from "@/types"
 
 export function DepartmentSetupStep() {
   const { data, addDepartment, removeDepartment, updateDepartment } = useOnboardingStore()
+  const { completeDepartmentSetup, isLoading } = useOnboardingAPI()
   const [newDepartment, setNewDepartment] = useState({ name: "", monthlyBudget: "" })
+  const [isSaving, setIsSaving] = useState(false)
 
   const handleAddDepartment = () => {
     if (newDepartment.name && newDepartment.monthlyBudget) {
@@ -28,6 +32,31 @@ export function DepartmentSetupStep() {
       updateDepartment(id, { [field]: Number.parseFloat(value) })
     } else {
       updateDepartment(id, { [field]: value })
+    }
+  }
+
+  const saveDepartments = async () => {
+    if (data.departments.length === 0) {
+      toast.error("Please add at least one department")
+      return
+    }
+
+    setIsSaving(true)
+    try {
+      const departmentsToSave = data.departments.map(dept => ({
+        name: dept.name,
+        monthlyBudget: dept.monthlyBudget,
+      }))
+      
+      const result = await completeDepartmentSetup(departmentsToSave)
+      if (result) {
+        toast.success("Departments saved successfully!")
+      }
+    } catch (error) {
+      console.error('Error saving departments:', error)
+      toast.error("Failed to save departments")
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -150,6 +179,17 @@ export function DepartmentSetupStep() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {data.departments.length > 0 && (
+        <div className="flex justify-end">
+          <Button 
+            onClick={saveDepartments}
+            disabled={isSaving || isLoading}
+          >
+            {isSaving ? "Saving..." : "Save Departments"}
+          </Button>
+        </div>
       )}
     </div>
   )

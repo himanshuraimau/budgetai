@@ -1,25 +1,39 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useOnboardingStore, useAuthStore } from "@/lib/store"
+import { useOnboardingStore } from "@/lib/store"
+import { useOnboardingAPI } from "@/hooks/use-onboarding-api"
 import { Button } from "@/components/ui/button"
+import { useSession } from "next-auth/react"
 
 export function CompletionStep() {
   const router = useRouter()
-  const { data, completeOnboarding } = useOnboardingStore()
-  const { user } = useAuthStore()
+  const { data: session } = useSession()
+  const { data } = useOnboardingStore()
+  const { completeOnboarding, isLoading } = useOnboardingAPI()
+  const [isCompleting, setIsCompleting] = useState(false)
   const isAdmin = data.userRole === "admin"
 
-  const handleComplete = () => {
-    completeOnboarding()
-
-    // Navigate to the appropriate dashboard
-    if (isAdmin) {
-      router.push("/admin/dashboard")
-    } else {
-      router.push("/employee/dashboard")
+  const handleComplete = async () => {
+    setIsCompleting(true)
+    try {
+      const result = await completeOnboarding()
+      
+      if (result) {
+        // Navigate to the appropriate dashboard based on role
+        if (result.role === "admin") {
+          router.push("/admin/dashboard")
+        } else {
+          router.push("/employee/dashboard")
+        }
+      }
+    } catch (error) {
+      console.error('Error completing onboarding:', error)
+    } finally {
+      setIsCompleting(false)
     }
   }
 
@@ -126,8 +140,12 @@ export function CompletionStep() {
       </div>
 
       <div className="flex justify-center">
-        <Button onClick={handleComplete} size="lg">
-          Go to Dashboard
+        <Button 
+          onClick={handleComplete} 
+          size="lg"
+          disabled={isCompleting || isLoading}
+        >
+          {isCompleting ? "Completing..." : "Go to Dashboard"}
         </Button>
       </div>
     </div>

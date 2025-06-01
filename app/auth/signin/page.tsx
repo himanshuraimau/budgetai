@@ -3,6 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -11,7 +12,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
-import { useAuthStore } from "@/lib/store"
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -23,7 +23,6 @@ type SignInFormValues = z.infer<typeof signInSchema>
 export default function SignInPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { login } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<SignInFormValues>({
@@ -38,31 +37,31 @@ export default function SignInPage() {
     setIsLoading(true)
 
     try {
-      await login(values.email, values.password)
-
-      toast({
-        title: "Success",
-        description: "You have been signed in.",
+      const result = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
       })
 
-      // Check if onboarding is completed
-      const user = useAuthStore.getState().user
-
-      if (user?.onboardingCompleted) {
-        // Redirect to the appropriate dashboard
-        if (user.role === "admin") {
-          router.push("/admin/dashboard")
-        } else {
-          router.push("/employee/dashboard")
-        }
+      if (result?.error) {
+        toast({
+          title: "Error",
+          description: "Invalid email or password.",
+          variant: "destructive",
+        })
       } else {
-        // Redirect to onboarding
-        router.push("/onboarding?step=1")
+        toast({
+          title: "Success",
+          description: "You have been signed in.",
+        })
+
+        // Redirect after successful login - we'll handle this in a callback
+        router.push("/dashboard")
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: "Invalid email or password.",
+        description: "An error occurred during sign in.",
         variant: "destructive",
       })
     } finally {

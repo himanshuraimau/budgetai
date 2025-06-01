@@ -45,4 +45,4 @@ const DepartmentSchema = new Schema<IDepartment>(
   }
 );
 
-export const Department = mongoose.model<IDepartment>('Department', DepartmentSchema); 
+export const Department = (mongoose.models?.Department || mongoose.model<IDepartment>('Department', DepartmentSchema)) as mongoose.Model<IDepartment>; 

@@ -69,3 +69,16 @@ export type OnboardingData = {
   paymanConnected: boolean
   inviteCode?: string
 }
+
+// Auth types
+export type SignInFormValues = {
+  email: string
+  password: string
+}
+
+export type SignUpFormValues = {
+  name: string
+  email: string
+  password: string
+  role: UserRole
+}

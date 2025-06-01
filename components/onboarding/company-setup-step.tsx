@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useOnboardingStore } from "@/lib/store"
+import { useOnboardingAPI } from "@/hooks/use-onboarding-api"
+import { toast } from "sonner"
 
 const companySchema = z.object({
   name: z.string().min(2, "Company name must be at least 2 characters"),
@@ -18,6 +20,7 @@ const companySchema = z.object({
 
 export function CompanySetupStep() {
   const { data, setCompanySetup } = useOnboardingStore()
+  const { completeCompanySetup, isLoading } = useOnboardingAPI()
   const [size, setSize] = useState<string>(data.companySetup?.size || "1-10")
   const [industry, setIndustry] = useState<string>(data.companySetup?.industry || "Tech")
 
@@ -25,6 +28,7 @@ export function CompanySetupStep() {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm({
     resolver: zodResolver(companySchema),
     defaultValues: {
@@ -34,8 +38,19 @@ export function CompanySetupStep() {
     },
   })
 
-  const onSubmit = (values: z.infer<typeof companySchema>) => {
-    setCompanySetup(values)
+  const watchedValues = watch()
+
+  const onSubmit = async (values: z.infer<typeof companySchema>) => {
+    try {
+      const result = await completeCompanySetup(values)
+      if (result) {
+        setCompanySetup(values)
+        toast.success("Company setup completed!")
+      }
+    } catch (error) {
+      console.error('Error setting up company:', error)
+      toast.error("Failed to setup company")
+    }
   }
 
   // Auto-save on form changes

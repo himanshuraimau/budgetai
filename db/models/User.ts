@@ -4,9 +4,11 @@ export interface IUser extends Document {
   email: string;
   name: string;
   role: 'admin' | 'employee';
-  companyId: mongoose.Types.ObjectId;
+  companyId?: mongoose.Types.ObjectId;
   departmentId?: mongoose.Types.ObjectId;
   onboardingCompleted: boolean;
+  password: string;
+  inviteCode?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,7 +35,7 @@ const UserSchema = new Schema<IUser>(
     companyId: {
       type: Schema.Types.ObjectId,
       ref: 'Company',
-      required: true,
+      required: false, // Allow creation without company initially
     },
     departmentId: {
       type: Schema.Types.ObjectId,
@@ -43,10 +45,18 @@ const UserSchema = new Schema<IUser>(
       type: Boolean,
       default: false,
     },
+    password: {
+      type: String,
+      required: true,
+    },
+    inviteCode: {
+      type: String,
+      trim: true,
+    },
   },
   {
     timestamps: true,
   }
 );
 
-export const User = mongoose.model<IUser>('User', UserSchema); 
+export const User = mongoose.models?.User as mongoose.Model<IUser> || mongoose.model<IUser>('User', UserSchema);

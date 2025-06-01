@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useToast } from "@/hooks/use-toast"
-import { useAuthStore, useOnboardingStore } from "@/lib/store"
 import type { UserRole } from "@/types"
 
 const signUpSchema = z.object({
@@ -29,8 +28,6 @@ type SignUpFormValues = z.infer<typeof signUpSchema>
 export default function SignUpPage() {
   const router = useRouter()
   const { toast } = useToast()
-  const { signup } = useAuthStore()
-  const { setUserRole } = useOnboardingStore()
   const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<SignUpFormValues>({
@@ -47,22 +44,31 @@ export default function SignUpPage() {
     setIsLoading(true)
 
     try {
-      await signup(values.email, values.password, values.name, values.role as UserRole)
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(values),
+      })
 
-      // Set the role in onboarding store
-      setUserRole(values.role as UserRole)
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Signup failed')
+      }
 
       toast({
         title: "Account created",
-        description: "Your account has been created successfully.",
+        description: "Your account has been created successfully. Please sign in.",
       })
 
-      // Redirect to onboarding
-      router.push("/onboarding?step=1")
+      // Redirect to signin page
+      router.push("/auth/signin")
     } catch (error) {
       toast({
         title: "Error",
-        description: "There was an error creating your account.",
+        description: error instanceof Error ? error.message : "There was an error creating your account.",
         variant: "destructive",
       })
     } finally {

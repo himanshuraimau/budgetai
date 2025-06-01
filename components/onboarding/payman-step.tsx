@@ -4,20 +4,46 @@ import { useState } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useOnboardingStore } from "@/lib/store"
+import { useOnboardingAPI } from "@/hooks/use-onboarding-api"
 import { CheckCircle2 } from "lucide-react"
+import { toast } from "sonner"
 
 export function PaymanStep() {
   const { data, setPaymanConnected } = useOnboardingStore()
+  const { completePaymanIntegration, isLoading } = useOnboardingAPI()
   const [isConnecting, setIsConnecting] = useState(false)
 
-  const handleConnect = () => {
+  const handleConnect = async () => {
     setIsConnecting(true)
 
-    // Simulate connection process
-    setTimeout(() => {
-      setPaymanConnected(true)
+    try {
+      // Simulate connection process
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      const result = await completePaymanIntegration(true)
+      if (result) {
+        setPaymanConnected(true)
+        toast.success("Successfully connected to Payman!")
+      }
+    } catch (error) {
+      console.error('Error connecting to Payman:', error)
+      toast.error("Failed to connect to Payman")
+    } finally {
       setIsConnecting(false)
-    }, 1500)
+    }
+  }
+
+  const handleSkip = async () => {
+    try {
+      const result = await completePaymanIntegration(false)
+      if (result) {
+        setPaymanConnected(false)
+        toast.success("Payman integration skipped")
+      }
+    } catch (error) {
+      console.error('Error skipping Payman:', error)
+      toast.error("Failed to skip Payman integration")
+    }
   }
 
   return (
@@ -51,10 +77,19 @@ export function PaymanStep() {
               </div>
 
               <div className="flex flex-col space-y-2 sm:flex-row sm:space-x-2 sm:space-y-0">
-                <Button onClick={handleConnect} disabled={isConnecting} className="flex-1">
+                <Button 
+                  onClick={handleConnect} 
+                  disabled={isConnecting || isLoading} 
+                  className="flex-1"
+                >
                   {isConnecting ? "Connecting..." : "Connect Payman"}
                 </Button>
-                <Button variant="outline" onClick={() => setPaymanConnected(false)} className="flex-1">
+                <Button 
+                  variant="outline" 
+                  onClick={handleSkip} 
+                  disabled={isConnecting || isLoading}
+                  className="flex-1"
+                >
                   Skip for now
                 </Button>
               </div>
