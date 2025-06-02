@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import type { OnboardingData, UserRole, CompanySetup, DepartmentSetup } from '@/types';
@@ -37,73 +38,79 @@ interface OnboardingDepartment {
   employeeCount: number;
 }
 
+// API functions
+const submitOnboardingStep = async (data: OnboardingStep): Promise<OnboardingUser> => {
+  const response = await fetch('/api/onboarding', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Failed to update onboarding');
+  }
+
+  return result.user;
+};
+
+const fetchOnboardingData = async (type: 'departments' | 'user'): Promise<any> => {
+  const response = await fetch(`/api/onboarding?type=${type}`);
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.error || 'Failed to fetch onboarding data');
+  }
+
+  return result;
+};
+
 export function useOnboardingAPI() {
   const { data: session, update: updateSession } = useSession();
-  const [isLoading, setIsLoading] = useState(false);
+  const queryClient = useQueryClient();
 
-  const submitOnboardingStep = async (data: OnboardingStep): Promise<OnboardingUser | null> => {
-    if (!session?.user) {
-      toast.error('Not authenticated');
-      return null;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/onboarding', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        toast.error(result.error || 'Failed to update onboarding');
-        return null;
-      }
-
+  // Mutations
+  const onboardingMutation = useMutation({
+    mutationFn: submitOnboardingStep,
+    onSuccess: async (data, variables) => {
       // Update the session with new user data
       await updateSession();
+      
+      // Invalidate and refetch user data
+      queryClient.invalidateQueries({ queryKey: ['onboarding', 'user'] });
+      queryClient.invalidateQueries({ queryKey: ['onboarding', 'departments'] });
 
-      if (data.step === 'complete') {
+      if (variables.step === 'complete') {
         toast.success('Onboarding completed successfully!');
       }
-
-      return result.user;
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       console.error('Onboarding submission error:', error);
-      toast.error('Failed to update onboarding');
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      toast.error(error.message);
+    },
+  });
 
-  const fetchOnboardingData = async (type: 'departments' | 'user'): Promise<any> => {
-    if (!session?.user) {
-      return null;
-    }
+  // Queries
+  const { data: departments = [], isLoading: isLoadingDepartments } = useQuery({
+    queryKey: ['onboarding', 'departments'],
+    queryFn: () => fetchOnboardingData('departments').then(result => result.departments || []),
+    enabled: !!session?.user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-    try {
-      const response = await fetch(`/api/onboarding?type=${type}`);
-      const result = await response.json();
+  const { data: userData, isLoading: isLoadingUser } = useQuery({
+    queryKey: ['onboarding', 'user'],
+    queryFn: () => fetchOnboardingData('user').then(result => result.user),
+    enabled: !!session?.user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-      if (!response.ok) {
-        console.error('Failed to fetch onboarding data:', result.error);
-        return null;
-      }
-
-      return result;
-    } catch (error) {
-      console.error('Onboarding fetch error:', error);
-      return null;
-    }
-  };
-
+  // Helper functions
   const completeCompanySetup = async (companySetup: CompanySetup) => {
-    return await submitOnboardingStep({
+    return onboardingMutation.mutateAsync({
       step: 'company',
       userRole: 'admin',
       companySetup,
@@ -111,7 +118,7 @@ export function useOnboardingAPI() {
   };
 
   const completeDepartmentSetup = async (departments: Omit<DepartmentSetup, 'id'>[]) => {
-    return await submitOnboardingStep({
+    return onboardingMutation.mutateAsync({
       step: 'departments',
       userRole: 'admin',
       departments,
@@ -119,7 +126,7 @@ export function useOnboardingAPI() {
   };
 
   const completeJoinCompany = async (inviteCode: string) => {
-    return await submitOnboardingStep({
+    return onboardingMutation.mutateAsync({
       step: 'join',
       userRole: 'employee',
       inviteCode,
@@ -127,7 +134,7 @@ export function useOnboardingAPI() {
   };
 
   const completeDepartmentAssignment = async (selectedDepartmentId: string) => {
-    return await submitOnboardingStep({
+    return onboardingMutation.mutateAsync({
       step: 'department',
       userRole: 'employee',
       selectedDepartmentId,
@@ -135,7 +142,7 @@ export function useOnboardingAPI() {
   };
 
   const completePaymanIntegration = async (paymanConnected: boolean = true) => {
-    return await submitOnboardingStep({
+    return onboardingMutation.mutateAsync({
       step: 'payman',
       userRole: session?.user?.role as UserRole || 'employee',
       paymanConnected,
@@ -143,24 +150,39 @@ export function useOnboardingAPI() {
   };
 
   const completeOnboarding = async () => {
-    return await submitOnboardingStep({
+    return onboardingMutation.mutateAsync({
       step: 'complete',
       userRole: session?.user?.role as UserRole || 'employee',
     });
   };
 
   const fetchDepartments = async (): Promise<OnboardingDepartment[]> => {
-    const result = await fetchOnboardingData('departments');
-    return result?.departments || [];
+    try {
+      const result = await fetchOnboardingData('departments');
+      return result?.departments || [];
+    } catch (error) {
+      console.error('Error fetching departments:', error);
+      toast.error('Failed to load departments');
+      return [];
+    }
   };
 
   const fetchUserData = async (): Promise<OnboardingUser | null> => {
-    const result = await fetchOnboardingData('user');
-    return result?.user || null;
+    try {
+      const result = await fetchOnboardingData('user');
+      return result?.user || null;
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+      return null;
+    }
   };
 
   return {
-    isLoading,
+    isLoading: onboardingMutation.isPending,
+    isLoadingDepartments,
+    isLoadingUser,
+    departments,
+    userData,
     completeCompanySetup,
     completeDepartmentSetup,
     completeJoinCompany,

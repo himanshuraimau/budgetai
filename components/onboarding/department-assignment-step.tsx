@@ -9,34 +9,26 @@ import { useOnboardingStore } from "@/lib/store"
 import { useOnboardingAPI } from "@/hooks/use-onboarding-api"
 import { toast } from "sonner"
 
+interface Department {
+  _id: string;
+  name: string;
+  monthlyBudget: number;
+  currentSpent: number;
+  employeeCount: number;
+}
+
 export function DepartmentAssignmentStep() {
   const { data } = useOnboardingStore()
-  const { fetchDepartments, completeDepartmentAssignment, isLoading } = useOnboardingAPI()
-  const [departments, setDepartments] = useState<any[]>([])
+  const { completeDepartmentAssignment, isLoading, departments, isLoadingDepartments } = useOnboardingAPI()
   const [selectedDepartment, setSelectedDepartment] = useState<string>("")
   const [isAssigning, setIsAssigning] = useState(false)
-  const [isLoadingDepartments, setIsLoadingDepartments] = useState(false)
 
-  // Fetch departments when component mounts
+  // Set initial selected department when departments load
   useEffect(() => {
-    const loadDepartments = async () => {
-      setIsLoadingDepartments(true)
-      try {
-        const depts = await fetchDepartments()
-        setDepartments(depts)
-        if (depts.length > 0) {
-          setSelectedDepartment(depts[0]._id)
-        }
-      } catch (error) {
-        console.error('Error loading departments:', error)
-        toast.error("Failed to load departments")
-      } finally {
-        setIsLoadingDepartments(false)
-      }
+    if (departments.length > 0 && !selectedDepartment) {
+      setSelectedDepartment(departments[0]._id)
     }
-
-    loadDepartments()
-  }, [])
+  }, [departments, selectedDepartment])
 
   const handleAssignDepartment = async () => {
     if (!selectedDepartment) {
@@ -83,7 +75,7 @@ export function DepartmentAssignmentStep() {
                 value={selectedDepartment} 
                 onValueChange={setSelectedDepartment}
               >
-                {departments.map((dept) => (
+                {departments.map((dept: Department) => (
                   <div
                     key={dept._id}
                     className="flex items-center space-x-2 rounded-lg border p-4 transition-colors hover:bg-gray-50"

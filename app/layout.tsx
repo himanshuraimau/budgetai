@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { AuthProvider } from '@/components/auth-provider'
+import { QueryProvider } from '@/components/query-provider'
 import { Toaster } from '@/components/ui/toaster'
 import './globals.css'
 
@@ -17,9 +18,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </QueryProvider>
         <Toaster />
       </body>
     </html>

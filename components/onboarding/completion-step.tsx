@@ -13,9 +13,12 @@ export function CompletionStep() {
   const router = useRouter()
   const { data: session } = useSession()
   const { data } = useOnboardingStore()
-  const { completeOnboarding, isLoading } = useOnboardingAPI()
+  const { completeOnboarding, isLoading, userData } = useOnboardingAPI()
   const [isCompleting, setIsCompleting] = useState(false)
-  const isAdmin = data.userRole === "admin"
+  
+  // Determine user role from session or onboarding data
+  const userRole = session?.user?.role || data.userRole
+  const isAdmin = userRole === "admin"
 
   const handleComplete = async () => {
     setIsCompleting(true)
@@ -24,7 +27,7 @@ export function CompletionStep() {
       
       if (result) {
         // Navigate to the appropriate dashboard based on role
-        if (result.role === "admin") {
+        if (result.role === "admin" || userRole === "admin") {
           router.push("/admin/dashboard")
         } else {
           router.push("/employee/dashboard")
