@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       company: {
-        id: company._id.toString(),
+        id: (company as any)._id.toString(),
         name: company.name,
         size: company.size,
         industry: company.industry,
