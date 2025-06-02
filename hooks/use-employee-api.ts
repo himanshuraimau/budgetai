@@ -44,7 +44,7 @@ const fetchEmployeeRequests = async (): Promise<PurchaseRequest[]> => {
 };
 
 const fetchDepartments = async (): Promise<Department[]> => {
-  const response = await fetch('/api/admin/departments');
+  const response = await fetch('/api/employee/departments');
   if (!response.ok) {
     throw new Error('Failed to fetch departments');
   }

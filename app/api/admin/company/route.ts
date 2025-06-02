@@ -1,18 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth'; 
 
-// Mock data - in a real app, this would come from a database
-const mockCompany = {
-  id: "1",
-  name: "Acme Corporation",
-  size: "51-200",
-  industry: "Tech",
-  totalBudget: 50000,
-  totalSpent: 31000,
-  employeeCount: 25,
-  departmentCount: 3,
-};
-
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -21,8 +9,9 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // In a real app, filter by user's company
-    return NextResponse.json({ company: mockCompany });
+    // TODO: Fetch company data from database
+    // const company = await getCompanyByUserId(session.user.id);
+    return NextResponse.json({ company: null });
   } catch (error) {
     console.error('Error fetching company:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -45,15 +34,13 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
     const { name, size, industry } = body;
 
-    // Update company data (in a real app, this would update the database)
-    const updatedCompany = {
-      ...mockCompany,
-      ...(name && { name }),
-      ...(size && { size }),
-      ...(industry && { industry }),
-    };
-
-    return NextResponse.json({ company: updatedCompany });
+    // TODO: Update company data in database
+    // const updatedCompany = await updateCompany(session.user.companyId, { name, size, industry });
+    
+    return NextResponse.json({ 
+      company: { name, size, industry },
+      message: 'Company updated successfully' 
+    });
   } catch (error) {
     console.error('Error updating company:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
