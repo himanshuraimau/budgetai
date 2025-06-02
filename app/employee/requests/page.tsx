@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import React,{ useState } from "react"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { Input } from "@/components/ui/input"
 import { StatusBadge } from "@/components/ui/status-badge"
