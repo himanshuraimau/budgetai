@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "@/hooks/use-toast"
-import { useAuthStore, useRequestsStore } from "@/lib/store"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
+import { useSession } from "next-auth/react"
 
 const requestSchema = z.object({
   amount: z
@@ -26,10 +26,8 @@ const requestSchema = z.object({
 type RequestFormValues = z.infer<typeof requestSchema>
 
 export function PurchaseRequestForm() {
-  const { toast } = useToast()
-  const { user } = useAuthStore()
-  const { addRequest } = useRequestsStore()
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const { data: session } = useSession()
+  const { submitRequest, isSubmittingRequest } = useEmployeeAPI()
 
   const form = useForm<RequestFormValues>({
     resolver: zodResolver(requestSchema),
@@ -42,34 +40,19 @@ export function PurchaseRequestForm() {
   })
 
   const onSubmit = async (values: RequestFormValues) => {
-    if (!user) return
-
-    setIsSubmitting(true)
+    if (!session?.user) return
 
     try {
-      await addRequest({
-        employeeId: user.id,
-        departmentId: user.departmentId || "1", // Fallback to first department
+      await submitRequest({
         amount: Number.parseFloat(values.amount),
         description: values.description,
         category: values.category,
         justification: values.justification || undefined,
       })
 
-      toast({
-        title: "Request submitted",
-        description: "Your purchase request has been submitted for approval.",
-      })
-
       form.reset()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error submitting your request.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
+      // Error handling is done in the hook
     }
   }
 
@@ -136,8 +119,8 @@ export function PurchaseRequestForm() {
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Submit Request"}
+          <Button type="submit" className="w-full" disabled={isSubmittingRequest}>
+            {isSubmittingRequest ? "Submitting..." : "Submit Request"}
           </Button>
         </form>
       </CardContent>

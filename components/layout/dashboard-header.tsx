@@ -3,11 +3,12 @@
 import Link from "next/link"
 import { MainNav } from "@/components/layout/main-nav"
 import { UserNav } from "@/components/layout/user-nav"
-import { useAuthStore, useCompanyStore } from "@/lib/store"
+import { useSession } from "next-auth/react"
+import { useAdminAPI } from "@/hooks/use-admin-api"
 
 export function DashboardHeader() {
-  const { user } = useAuthStore()
-  const { company } = useCompanyStore()
+  const { data: session } = useSession()
+  const { company } = useAdminAPI()
 
   return (
     <header className="sticky top-0 z-40 border-b bg-background">
@@ -20,7 +21,7 @@ export function DashboardHeader() {
         </div>
         <div className="flex items-center gap-4">
           <div className="hidden text-sm text-muted-foreground md:block">
-            {user?.role === "admin" ? company?.name : `${company?.name} • ${user?.role}`}
+            {session?.user?.role === "admin" ? company?.name : `${company?.name} • ${session?.user?.role}`}
           </div>
           <UserNav />
         </div>

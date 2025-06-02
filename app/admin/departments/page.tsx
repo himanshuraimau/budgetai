@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { Plus, Edit, Trash2 } from "lucide-react"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { Button } from "@/components/ui/button"
@@ -17,13 +17,20 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useCompanyStore } from "@/lib/store"
-import { useToast } from "@/hooks/use-toast"
+import { useAdminAPI } from "@/hooks/use-admin-api"
 import type { Department } from "@/types"
 
 export default function AdminDepartmentsPage() {
-  const { toast } = useToast()
-  const { departments, fetchDepartments, addDepartment, updateDepartment, removeDepartment } = useCompanyStore()
+  const { 
+    departments, 
+    createDepartment, 
+    updateDepartment, 
+    deleteDepartment,
+    isDepartmentsLoading,
+    isCreatingDepartment,
+    isUpdatingDepartment,
+    isDeletingDepartment
+  } = useAdminAPI()
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -34,30 +41,17 @@ export default function AdminDepartmentsPage() {
     employeeCount: "0",
   })
 
-  useEffect(() => {
-    fetchDepartments()
-  }, [fetchDepartments])
-
   const handleAddDepartment = async () => {
     try {
-      await addDepartment({
+      await createDepartment({
         name: newDepartment.name,
         monthlyBudget: Number(newDepartment.monthlyBudget),
-        currentSpent: 0,
         employeeCount: Number(newDepartment.employeeCount),
       })
       setNewDepartment({ name: "", monthlyBudget: "", employeeCount: "0" })
       setIsAddDialogOpen(false)
-      toast({
-        title: "Department added",
-        description: "The department has been added successfully.",
-      })
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error adding the department.",
-        variant: "destructive",
-      })
+      // Error handling is done in the hook
     }
   }
 
@@ -65,22 +59,15 @@ export default function AdminDepartmentsPage() {
     if (!currentDepartment) return
 
     try {
-      await updateDepartment(currentDepartment.id, {
+      await updateDepartment({
+        id: currentDepartment.id,
         name: currentDepartment.name,
         monthlyBudget: currentDepartment.monthlyBudget,
         employeeCount: currentDepartment.employeeCount,
       })
       setIsEditDialogOpen(false)
-      toast({
-        title: "Department updated",
-        description: "The department has been updated successfully.",
-      })
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error updating the department.",
-        variant: "destructive",
-      })
+      // Error handling is done in the hook
     }
   }
 
@@ -88,18 +75,10 @@ export default function AdminDepartmentsPage() {
     if (!currentDepartment) return
 
     try {
-      await removeDepartment(currentDepartment.id)
+      await deleteDepartment(currentDepartment.id)
       setIsDeleteDialogOpen(false)
-      toast({
-        title: "Department deleted",
-        description: "The department has been deleted successfully.",
-      })
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "There was an error deleting the department.",
-        variant: "destructive",
-      })
+      // Error handling is done in the hook
     }
   }
 
@@ -161,14 +140,22 @@ export default function AdminDepartmentsPage() {
                 <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleAddDepartment}>Add Department</Button>
+                <Button onClick={handleAddDepartment} disabled={isCreatingDepartment}>
+                  {isCreatingDepartment ? "Adding..." : "Add Department"}
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {departments.map((department) => (
+        {isDepartmentsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-muted-foreground">Loading departments...</div>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {departments.map((department) => (
             <Card key={department.id}>
               <CardHeader className="pb-3">
                 <CardTitle>{department.name}</CardTitle>
@@ -261,7 +248,9 @@ export default function AdminDepartmentsPage() {
                         <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                           Cancel
                         </Button>
-                        <Button onClick={handleEditDepartment}>Save Changes</Button>
+                        <Button onClick={handleEditDepartment} disabled={isUpdatingDepartment}>
+                          {isUpdatingDepartment ? "Saving..." : "Save Changes"}
+                        </Button>
                       </DialogFooter>
                     </DialogContent>
                   </Dialog>
@@ -297,8 +286,8 @@ export default function AdminDepartmentsPage() {
                         <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                           Cancel
                         </Button>
-                        <Button variant="destructive" onClick={handleDeleteDepartment}>
-                          Delete
+                        <Button variant="destructive" onClick={handleDeleteDepartment} disabled={isDeletingDepartment}>
+                          {isDeletingDepartment ? "Deleting..." : "Delete"}
                         </Button>
                       </DialogFooter>
                     </DialogContent>
@@ -307,16 +296,18 @@ export default function AdminDepartmentsPage() {
               </CardContent>
             </Card>
           ))}
-        </div>
+            </div>
 
-        {departments.length === 0 && (
-          <div className="flex h-40 flex-col items-center justify-center rounded-lg border border-dashed">
-            <p className="text-muted-foreground">No departments found.</p>
-            <Button variant="outline" className="mt-4" onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Your First Department
-            </Button>
-          </div>
+            {departments.length === 0 && (
+              <div className="flex h-40 flex-col items-center justify-center rounded-lg border border-dashed">
+                <p className="text-muted-foreground">No departments found.</p>
+                <Button variant="outline" className="mt-4" onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Your First Department
+                </Button>
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

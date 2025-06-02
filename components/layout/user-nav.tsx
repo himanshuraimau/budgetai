@@ -12,14 +12,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useAuthStore } from "@/lib/store"
+import { signOut, useSession } from "next-auth/react"
 
 export function UserNav() {
   const router = useRouter()
-  const { user, logout } = useAuthStore()
+  const { data: session } = useSession()
+  const user = session?.user
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await signOut({ redirect: false })
     router.push("/")
   }
 

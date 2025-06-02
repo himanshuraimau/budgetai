@@ -1,23 +1,12 @@
 "use client"
 
-import { useEffect } from "react"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { MetricCards } from "@/components/dashboard/metric-cards"
 import { RecentRequestsTable } from "@/components/dashboard/recent-requests-table"
 import { DepartmentCards } from "@/components/dashboard/department-cards"
 import { DepartmentSpendingChart } from "@/components/dashboard/department-spending-chart"
-import { useCompanyStore, useRequestsStore } from "@/lib/store"
 
 export default function AdminDashboardPage() {
-  const { fetchCompany, fetchDepartments } = useCompanyStore()
-  const { fetchRequests } = useRequestsStore()
-
-  useEffect(() => {
-    fetchCompany()
-    fetchDepartments()
-    fetchRequests()
-  }, [fetchCompany, fetchDepartments, fetchRequests])
-
   return (
     <div className="flex min-h-screen flex-col">
       <DashboardHeader />

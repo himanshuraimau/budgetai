@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
+import { useSession } from "next-auth/react"
 import { cn } from "@/lib/utils"
-import { useAuthStore } from "@/lib/store"
 
 interface MainNavProps {
   className?: string
@@ -11,10 +11,10 @@ interface MainNavProps {
 
 export function MainNav({ className }: MainNavProps) {
   const pathname = usePathname()
-  const { user } = useAuthStore()
+  const { data: session } = useSession()
 
-  const isAdmin = user?.role === "admin"
-  const isEmployee = user?.role === "employee"
+  const isAdmin = session?.user?.role === "admin"
+  const isEmployee = session?.user?.role === "employee"
 
   const adminRoutes = [
     { href: "/admin/dashboard", label: "Dashboard" },

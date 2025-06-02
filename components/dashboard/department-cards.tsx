@@ -3,15 +3,21 @@ import { Building2, Edit, Users } from "lucide-react"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { BudgetProgress } from "@/components/ui/budget-progress"
 import { Button } from "@/components/ui/button"
-import { useCompanyStore } from "@/lib/store"
+import { useAdminAPI } from "@/hooks/use-admin-api"
 import Link from "next/link"
 
 export function DepartmentCards() {
-  const { departments } = useCompanyStore()
+  const { departments, isDepartmentsLoading } = useAdminAPI()
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {departments.map((department) => (
+    <>
+      {isDepartmentsLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <div className="text-muted-foreground">Loading departments...</div>
+        </div>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {departments.map((department) => (
         <Card key={department.id} className="overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">{department.name}</CardTitle>
@@ -54,5 +60,7 @@ export function DepartmentCards() {
         </Card>
       </Link>
     </div>
+      )}
+    </>
   )
 }

@@ -5,7 +5,8 @@ import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
-import { useRequestsStore } from "@/lib/store"
+import { useAdminAPI } from "@/hooks/use-admin-api"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 import { ArrowRight } from "lucide-react"
 
 interface RecentRequestsTableProps {
@@ -14,7 +15,13 @@ interface RecentRequestsTableProps {
 }
 
 export function RecentRequestsTable({ isAdmin = true, limit = 5 }: RecentRequestsTableProps) {
-  const { requests, updateRequestStatus } = useRequestsStore()
+  const adminAPI = useAdminAPI()
+  const employeeAPI = useEmployeeAPI()
+  
+  const requests = isAdmin ? adminAPI.requests : employeeAPI.requests
+  const updateRequestStatus = isAdmin ? adminAPI.updateRequestStatus : undefined
+  const isRequestsLoading = isAdmin ? adminAPI.isRequestsLoading : employeeAPI.isRequestsLoading
+  
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Sort by date, newest first
@@ -30,18 +37,40 @@ export function RecentRequestsTable({ isAdmin = true, limit = 5 }: RecentRequest
     })
   }
 
-  const handleApprove = (id: string) => {
-    updateRequestStatus(id, "approved", "Approved by admin")
+  const handleApprove = async (id: string) => {
+    if (isAdmin && updateRequestStatus) {
+      await updateRequestStatus({ 
+        id, 
+        status: "approved", 
+        aiDecisionReason: "Approved by admin" 
+      })
+    }
   }
 
-  const handleDeny = (id: string) => {
-    updateRequestStatus(id, "denied", "Denied by admin")
+  const handleDeny = async (id: string) => {
+    if (isAdmin && updateRequestStatus) {
+      await updateRequestStatus({ 
+        id, 
+        status: "denied", 
+        aiDecisionReason: "Denied by admin" 
+      })
+    }
   }
 
   const toggleExpand = (id: string) => {
     setExpandedId(expandedId === id ? null : id)
   }
 
+  if (isRequestsLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-center py-8">
+          <div className="text-muted-foreground">Loading requests...</div>
+        </div>
+      </div>
+    )
+  }
+  
   return (
     <div className="space-y-4">
       <div className="rounded-md border">

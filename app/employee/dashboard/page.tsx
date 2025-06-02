@@ -1,29 +1,39 @@
 "use client"
 
-import { useEffect } from "react"
 import { PlusCircle } from "lucide-react"
 import Link from "next/link"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
-import { MetricCards } from "@/components/dashboard/metric-cards"
-import { RecentRequestsTable } from "@/components/dashboard/recent-requests-table"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BudgetProgress } from "@/components/ui/budget-progress"
-import { useAuthStore, useCompanyStore, useRequestsStore } from "@/lib/store"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 
 export default function EmployeeDashboardPage() {
-  const { user } = useAuthStore()
-  const { fetchCompany, fetchDepartments, departments } = useCompanyStore()
-  const { fetchRequests } = useRequestsStore()
+  const { 
+    requests, 
+    userDepartment,
+    pendingRequestsCount,
+    approvedRequestsCount,
+    deniedRequestsCount,
+    thisMonthAmount,
+    isRequestsLoading,
+    isDepartmentsLoading
+  } = useEmployeeAPI()
 
-  useEffect(() => {
-    fetchCompany()
-    fetchDepartments()
-    fetchRequests()
-  }, [fetchCompany, fetchDepartments, fetchRequests])
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    })
+  }
 
-  // Find user's department
-  const userDepartment = departments.find((dept) => dept.id === user?.departmentId) || departments[0]
+  // Get recent requests (last 5)
+  const recentRequests = requests
+    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime())
+    .slice(0, 5)
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -44,12 +54,88 @@ export default function EmployeeDashboardPage() {
           </Link>
         </div>
 
-        <MetricCards isAdmin={false} />
+        {/* Metrics Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingRequestsCount}</div>
+              <p className="text-xs text-muted-foreground">Awaiting approval</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Approved</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{approvedRequestsCount}</div>
+              <p className="text-xs text-muted-foreground">Successfully approved</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Denied</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{deniedRequestsCount}</div>
+              <p className="text-xs text-muted-foreground">Requests denied</p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">This Month</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">${thisMonthAmount.toLocaleString()}</div>
+              <p className="text-xs text-muted-foreground">Total requested</p>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="grid gap-8 lg:grid-cols-2">
           <div>
             <h2 className="mb-4 text-xl font-semibold">Recent Requests</h2>
-            <RecentRequestsTable isAdmin={false} limit={5} />
+            {isRequestsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-muted-foreground">Loading requests...</div>
+              </div>
+            ) : (
+              <Card>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Description</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentRequests.map((request) => (
+                      <TableRow key={request.id}>
+                        <TableCell className="max-w-[200px] truncate">
+                          {request.description}
+                        </TableCell>
+                        <TableCell>${request.amount.toLocaleString()}</TableCell>
+                        <TableCell>
+                          <StatusBadge status={request.status} />
+                        </TableCell>
+                        <TableCell>{formatDate(request.submittedAt)}</TableCell>
+                      </TableRow>
+                    ))}
+                    {recentRequests.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="h-24 text-center">
+                          No requests found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </Card>
+            )}
           </div>
 
           <div>

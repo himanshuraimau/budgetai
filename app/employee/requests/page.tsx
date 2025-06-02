@@ -1,26 +1,19 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { Input } from "@/components/ui/input"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useRequestsStore, useAuthStore, useCompanyStore } from "@/lib/store"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 import type { RequestStatus } from "@/types"
 
 export default function EmployeeRequestsPage() {
-  const { user } = useAuthStore()
-  const { requests, fetchRequests } = useRequestsStore()
-  const { departments, fetchDepartments } = useCompanyStore()
+  const { requests, departments, isRequestsLoading, isDepartmentsLoading } = useEmployeeAPI()
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<RequestStatus | "all">("all")
   const [expandedId, setExpandedId] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetchRequests()
-    fetchDepartments()
-  }, [fetchRequests, fetchDepartments])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -34,11 +27,8 @@ export default function EmployeeRequestsPage() {
     setExpandedId(expandedId === id ? null : id)
   }
 
-  // Filter requests to only show the current user's requests
-  const userRequests = requests.filter((request) => request.employeeId === user?.id)
-
   // Filter requests based on search term and status
-  const filteredRequests = userRequests.filter((request) => {
+  const filteredRequests = requests.filter((request) => {
     const matchesSearch =
       request.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       request.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -86,8 +76,13 @@ export default function EmployeeRequestsPage() {
           </div>
         </div>
 
-        <div className="rounded-md border">
-          <Table>
+        {isRequestsLoading || isDepartmentsLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="text-muted-foreground">Loading requests...</div>
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Amount</TableHead>
@@ -154,6 +149,7 @@ export default function EmployeeRequestsPage() {
             </TableBody>
           </Table>
         </div>
+        )}
       </main>
     </div>
   )

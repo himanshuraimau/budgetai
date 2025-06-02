@@ -2,13 +2,13 @@
 
 import { useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useCompanyStore } from "@/lib/store"
+import { useAdminAPI } from "@/hooks/use-admin-api"
 
 // Note: In a real app, we would use a proper charting library like Chart.js or Recharts
 // This is a simplified version for demonstration purposes
 
 export function DepartmentSpendingChart() {
-  const { departments } = useCompanyStore()
+  const { departments, isDepartmentsLoading } = useAdminAPI()
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
@@ -58,9 +58,15 @@ export function DepartmentSpendingChart() {
         <CardDescription>Monthly budget utilization by department</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="h-[300px] w-full">
-          <canvas ref={canvasRef} width={500} height={300} className="h-full w-full" />
-        </div>
+        {isDepartmentsLoading ? (
+          <div className="flex h-[300px] items-center justify-center">
+            <div className="text-muted-foreground">Loading chart data...</div>
+          </div>
+        ) : (
+          <div className="h-[300px] w-full">
+            <canvas ref={canvasRef} width={500} height={300} className="h-full w-full" />
+          </div>
+        )}
       </CardContent>
     </Card>
   )

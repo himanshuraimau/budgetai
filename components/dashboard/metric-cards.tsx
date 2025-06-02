@@ -2,15 +2,19 @@
 
 import { Building2, CreditCard, DollarSign, Users } from "lucide-react"
 import { MetricCard } from "@/components/ui/metric-card"
-import { useCompanyStore, useRequestsStore } from "@/lib/store"
+import { useAdminAPI } from "@/hooks/use-admin-api"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 
 interface MetricCardsProps {
   isAdmin?: boolean
 }
 
 export function MetricCards({ isAdmin = true }: MetricCardsProps) {
-  const { departments } = useCompanyStore()
-  const { requests } = useRequestsStore()
+  const adminAPI = useAdminAPI()
+  const employeeAPI = useEmployeeAPI()
+  
+  const departments = isAdmin ? adminAPI.departments : employeeAPI.departments
+  const requests = isAdmin ? adminAPI.requests : employeeAPI.requests
 
   // Calculate total budget and spent
   const totalBudget = departments.reduce((sum, dept) => sum + dept.monthlyBudget, 0)
