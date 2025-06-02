@@ -23,7 +23,7 @@ export async function PUT(
 
     const body = await request.json();
     const { status, aiDecisionReason } = body;
-    const requestId = params.id;
+    const requestId = (await params).id;
 
     if (!['pending', 'approved', 'denied'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });

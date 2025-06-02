@@ -29,7 +29,7 @@ export async function PUT(
 
     const body = await request.json();
     const { name, monthlyBudget, employeeCount } = body;
-    const departmentId = params.id;
+    const departmentId = (await params).id;
 
     // Update department in database
     const updatedDepartment = await Department.findOneAndUpdate(
@@ -86,7 +86,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'User not found or not associated with a company' }, { status: 404 });
     }
 
-    const departmentId = params.id;
+    const departmentId = (await params).id;
 
     // Delete department from database
     const deleted = await Department.findOneAndDelete({ 

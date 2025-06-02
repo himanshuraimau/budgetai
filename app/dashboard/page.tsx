@@ -17,8 +17,9 @@ export default function DashboardRedirect() {
     }
 
     if (user) {
-      if (!user.onboardingCompleted) {
-        router.push("/onboarding?step=1")
+      // If user doesn't have a company, redirect to setup
+      if (!user.hasCompany) {
+        router.push("/setup")
         return
       }
 

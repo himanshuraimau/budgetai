@@ -5,9 +5,7 @@ import type {
   Company,
   Department,
   PurchaseRequest,
-  OnboardingData,
   UserRole,
-  OnboardingStep,
   RequestStatus,
 } from "@/types"
 
@@ -27,15 +25,14 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       login: async (email, password) => {
         // Mock login - would be replaced with real auth
-        // Find a matching user from mock data or create a default one
         const mockUser: User = {
-          id: email.includes("admin") ? "1" : "2", // Use ID 1 for admin, 2 for employee
+          id: email.includes("admin") ? "1" : "2",
           email,
           name: email.includes("admin") ? "John Admin" : "Sarah Marketing",
           role: email.includes("admin") ? "admin" : "employee",
           companyId: "1",
           departmentId: email.includes("admin") ? undefined : "1",
-          onboardingCompleted: false,
+          hasCompany: true,
         }
         set({ user: mockUser, isAuthenticated: true })
       },
@@ -46,8 +43,9 @@ export const useAuthStore = create<AuthState>()(
           email,
           name,
           role,
-          companyId: "",
-          onboardingCompleted: false,
+          companyId: undefined,
+          departmentId: undefined,
+          hasCompany: false,
         }
         set({ user: mockUser, isAuthenticated: true })
       },
@@ -57,96 +55,6 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "auth-storage",
-    },
-  ),
-)
-
-// Onboarding Store
-interface OnboardingState {
-  data: OnboardingData
-  setStep: (step: OnboardingStep) => void
-  setUserRole: (role: UserRole) => void
-  setCompanySetup: (companySetup: OnboardingData["companySetup"]) => void
-  addDepartment: (department: Omit<Department, "id" | "companyId" | "currentSpent" | "employeeCount">) => void
-  removeDepartment: (id: string) => void
-  updateDepartment: (id: string, data: Partial<Department>) => void
-  setPaymanConnected: (connected: boolean) => void
-  setInviteCode: (code: string) => void
-  resetOnboarding: () => void
-  completeOnboarding: () => void
-}
-
-const initialOnboardingData: OnboardingData = {
-  currentStep: 1,
-  userRole: "admin",
-  companySetup: null,
-  departments: [],
-  paymanConnected: false,
-  inviteCode: undefined,
-}
-
-export const useOnboardingStore = create<OnboardingState>()(
-  persist(
-    (set) => ({
-      data: initialOnboardingData,
-      setStep: (step) =>
-        set((state) => ({
-          data: { ...state.data, currentStep: step },
-        })),
-      setUserRole: (role) =>
-        set((state) => ({
-          data: { ...state.data, userRole: role },
-        })),
-      setCompanySetup: (companySetup) =>
-        set((state) => ({
-          data: { ...state.data, companySetup },
-        })),
-      addDepartment: (department) =>
-        set((state) => ({
-          data: {
-            ...state.data,
-            departments: [
-              ...state.data.departments,
-              {
-                id: Math.random().toString(36).substring(2, 9),
-                name: department.name,
-                monthlyBudget: department.monthlyBudget,
-              },
-            ],
-          },
-        })),
-      removeDepartment: (id) =>
-        set((state) => ({
-          data: {
-            ...state.data,
-            departments: state.data.departments.filter((dept) => dept.id !== id),
-          },
-        })),
-      updateDepartment: (id, data) =>
-        set((state) => ({
-          data: {
-            ...state.data,
-            departments: state.data.departments.map((dept) => (dept.id === id ? { ...dept, ...data } : dept)),
-          },
-        })),
-      setPaymanConnected: (connected) =>
-        set((state) => ({
-          data: { ...state.data, paymanConnected: connected },
-        })),
-      setInviteCode: (code) =>
-        set((state) => ({
-          data: { ...state.data, inviteCode: code },
-        })),
-      resetOnboarding: () => set({ data: initialOnboardingData }),
-      completeOnboarding: () => {
-        // This would update the user's onboardingCompleted status
-        useAuthStore.setState((state) => ({
-          user: state.user ? { ...state.user, onboardingCompleted: true } : null,
-        }))
-      },
-    }),
-    {
-      name: "onboarding-storage",
     },
   ),
 )
@@ -173,6 +81,7 @@ export const useCompanyStore = create<CompanyState>()((set) => ({
       size: "11-50",
       industry: "Tech",
       adminId: "1",
+      joinCode: "ABC123",
       createdAt: new Date().toISOString(),
     }
     set({ company: mockCompany })

@@ -64,8 +64,6 @@ export async function createUser(userData: {
       role: userData.role,
       companyId: userData.companyId ? new mongoose.Types.ObjectId(userData.companyId) : undefined,
       departmentId: userData.departmentId ? new mongoose.Types.ObjectId(userData.departmentId) : undefined,
-      inviteCode: userData.inviteCode,
-      onboardingCompleted: false,
     });
 
     await user.save();

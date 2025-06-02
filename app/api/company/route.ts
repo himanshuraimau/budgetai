@@ -14,6 +14,7 @@ const createCompanySchema = z.object({
 // Join company schema
 const joinCompanySchema = z.object({
   joinCode: z.string().min(1, 'Join code is required'),
+  departmentId: z.string().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -96,11 +97,31 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Update user with company
-      await User.findByIdAndUpdate(session.user.id, {
+      // Update user with company and department
+      const updateData: any = {
         companyId: company._id,
         role: 'employee', // Set role to employee when joining
-      });
+      };
+
+      // Add department if provided
+      if (validatedData.departmentId) {
+        // Verify department belongs to this company
+        const { Department } = await import('@/db/models');
+        const department = await Department.findOne({ 
+          _id: validatedData.departmentId, 
+          companyId: company._id 
+        });
+        
+        if (department) {
+          updateData.departmentId = validatedData.departmentId;
+          // Increment employee count in department
+          await Department.findByIdAndUpdate(validatedData.departmentId, {
+            $inc: { employeeCount: 1 }
+          });
+        }
+      }
+
+      await User.findByIdAndUpdate(session.user.id, updateData);
 
       return NextResponse.json({
         success: true,

@@ -5,9 +5,9 @@ export type User = {
   email: string
   name: string
   role: UserRole
-  companyId: string
+  companyId?: string
   departmentId?: string
-  onboardingCompleted: boolean
+  hasCompany?: boolean
 }
 
 // Company types
@@ -17,6 +17,7 @@ export type Company = {
   size: "1-10" | "11-50" | "51-200" | "200+"
   industry: "Tech" | "Finance" | "Healthcare" | "Retail" | "Other"
   adminId: string
+  joinCode?: string
   createdAt: string
 }
 
@@ -46,28 +47,10 @@ export type PurchaseRequest = {
   processedAt?: string
 }
 
-// Onboarding types
-export type OnboardingStep = 1 | 2 | 3 | 4 | 5
-
 export type CompanySetup = {
   name: string
   size: "1-10" | "11-50" | "51-200" | "200+"
   industry: "Tech" | "Finance" | "Healthcare" | "Retail" | "Other"
-}
-
-export type DepartmentSetup = {
-  id: string
-  name: string
-  monthlyBudget: number
-}
-
-export type OnboardingData = {
-  currentStep: OnboardingStep
-  userRole: UserRole
-  companySetup: CompanySetup | null
-  departments: DepartmentSetup[]
-  paymanConnected: boolean
-  inviteCode?: string
 }
 
 // Auth types

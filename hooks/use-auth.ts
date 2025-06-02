@@ -13,7 +13,7 @@ export function useAuth() {
     role: session.user.role as "admin" | "employee",
     companyId: session.user.companyId,
     departmentId: session.user.departmentId,
-    onboardingCompleted: session.user.onboardingCompleted,
+    hasCompany: !!session.user.companyId,
   } : null
 
   return {
