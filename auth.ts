@@ -36,7 +36,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.role = user.role
         token.companyId = user.companyId
         token.departmentId = user.departmentId
-        token.onboardingCompleted = user.onboardingCompleted
       }
       return token
     },
@@ -47,7 +46,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = token.role as string
         session.user.companyId = token.companyId as string
         session.user.departmentId = token.departmentId as string
-        session.user.onboardingCompleted = token.onboardingCompleted as boolean
       }
       return session
     },

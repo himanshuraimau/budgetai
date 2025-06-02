@@ -34,7 +34,6 @@ export async function getUserFromDb(email: string, password: string): Promise<an
       role: user.role,
       companyId: user.companyId?.toString() || '',
       departmentId: user.departmentId?.toString(),
-      onboardingCompleted: user.onboardingCompleted,
     };
   } catch (error) {
     console.error('Error getting user from database:', error);
@@ -54,7 +53,6 @@ export async function createUser(userData: {
   role: 'admin' | 'employee';
   companyId?: string;
   departmentId?: string;
-  inviteCode?: string;
 }): Promise<IUser> {
   try {
     await connectDB();

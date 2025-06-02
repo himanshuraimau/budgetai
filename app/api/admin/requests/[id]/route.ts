@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { connectDB } from '@/db/config';
+import { PurchaseRequest, User, Department } from '@/db/models';
 
 export async function PUT(
   request: NextRequest,
@@ -17,6 +19,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Forbidden - Admin access required' }, { status: 403 });
     }
 
+    await connectDB();
+
     const body = await request.json();
     const { status, aiDecisionReason } = body;
     const requestId = params.id;
@@ -25,25 +29,47 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
     }
 
-    // TODO: Update request in database
-    // const updatedRequest = await updateRequestStatus(requestId, {
-    //   status,
-    //   aiDecisionReason,
-    //   processedAt: new Date().toISOString()
-    // });
+    // Update request in database
+    const updatedRequest = await PurchaseRequest.findByIdAndUpdate(
+      requestId,
+      {
+        status,
+        aiDecisionReason,
+        processedAt: new Date()
+      },
+      { new: true }
+    ).populate('employeeId', 'name email').populate('departmentId', 'name');
 
-    // if (!updatedRequest) {
-    //   return NextResponse.json({ error: 'Request not found' }, { status: 404 });
-    // }
+    if (!updatedRequest) {
+      return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
 
-    const updatedRequest = {
-      id: requestId,
-      status,
-      ...(aiDecisionReason && { aiDecisionReason }),
-      processedAt: new Date().toISOString(),
+    // If approved, update department spending
+    if (status === 'approved') {
+      await Department.findByIdAndUpdate(
+        updatedRequest.departmentId,
+        { $inc: { currentSpent: updatedRequest.amount } }
+      );
+    }
+
+    const formattedRequest = {
+      id: (updatedRequest as any)._id.toString(),
+      employeeId: (updatedRequest as any).employeeId._id.toString(),
+      employeeName: (updatedRequest as any).employeeId.name,
+      employeeEmail: (updatedRequest as any).employeeId.email,
+      departmentId: (updatedRequest as any).departmentId._id.toString(),
+      departmentName: (updatedRequest as any).departmentId.name,
+      amount: updatedRequest.amount,
+      description: updatedRequest.description,
+      category: updatedRequest.category,
+      justification: updatedRequest.justification,
+      status: updatedRequest.status,
+      aiDecisionReason: updatedRequest.aiDecisionReason,
+      submittedAt: updatedRequest.submittedAt.toISOString(),
+      processedAt: updatedRequest.processedAt?.toISOString(),
     };
 
-    return NextResponse.json({ request: updatedRequest });
+    return NextResponse.json({ request: formattedRequest });
   } catch (error) {
     console.error('Error updating request:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

@@ -5,6 +5,7 @@ export interface ICompany extends Document {
   size: '1-10' | '11-50' | '51-200' | '200+';
   industry: 'Tech' | 'Finance' | 'Healthcare' | 'Retail' | 'Other';
   adminId: mongoose.Types.ObjectId;
+  joinCode: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -30,6 +31,12 @@ const CompanySchema = new Schema<ICompany>(
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+    },
+    joinCode: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
     },
   },
   {

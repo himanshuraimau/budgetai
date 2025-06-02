@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
+import { connectDB } from '@/db/config';
+import { PurchaseRequest, User } from '@/db/models';
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,10 +11,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // TODO: Fetch employee's requests from database
-    // const userRequests = await getRequestsByEmployee(session.user.id);
+    await connectDB();
 
-    return NextResponse.json({ requests: [] });
+    // Fetch employee's requests from database
+    const userRequests = await PurchaseRequest.find({ employeeId: session.user.id })
+      .populate('departmentId', 'name')
+      .sort({ submittedAt: -1 })
+      .lean();
+
+    const formattedRequests = userRequests.map(req => ({
+      id: req._id.toString(),
+      employeeId: req.employeeId.toString(),
+      departmentId: req.departmentId._id.toString(),
+      departmentName: (req.departmentId as any).name,
+      amount: req.amount,
+      description: req.description,
+      category: req.category,
+      justification: req.justification,
+      status: req.status,
+      aiDecisionReason: req.aiDecisionReason,
+      submittedAt: req.submittedAt.toISOString(),
+      processedAt: req.processedAt?.toISOString(),
+    }));
+
+    return NextResponse.json({ requests: formattedRequests });
   } catch (error) {
     console.error('Error fetching employee requests:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -25,6 +47,14 @@ export async function POST(request: NextRequest) {
     
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    await connectDB();
+
+    // Get user with department info
+    const user = await User.findById(session.user.id);
+    if (!user || !user.departmentId) {
+      return NextResponse.json({ error: 'User not found or not assigned to a department' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -45,29 +75,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // TODO: Create request in database
-    // const newRequest = await createRequest({
-    //   employeeId: session.user.id,
-    //   departmentId: session.user.departmentId,
-    //   amount: Number(amount),
-    //   description,
-    //   category,
-    //   justification
-    // });
-
-    const newRequest = {
-      id: `req_${Date.now()}`,
+    // Create request in database
+    const newRequest = new PurchaseRequest({
       employeeId: session.user.id,
-      departmentId: (session.user as any).departmentId || "1",
+      departmentId: user.departmentId,
       amount: Number(amount),
       description,
       category,
-      status: 'pending' as const,
-      submittedAt: new Date().toISOString(),
       justification,
+      status: 'pending',
+      submittedAt: new Date(),
+    });
+
+    await newRequest.save();
+
+    // Populate the saved request to return complete data
+    const populatedRequest = await PurchaseRequest.findById(newRequest._id)
+      .populate('departmentId', 'name')
+      .lean();
+
+    const formattedRequest = {
+      id: (populatedRequest as any)._id.toString(),
+      employeeId: (populatedRequest as any).employeeId.toString(),
+      departmentId: (populatedRequest as any).departmentId._id.toString(),
+      departmentName: (populatedRequest as any).departmentId.name,
+      amount: (populatedRequest as any).amount,
+      description: (populatedRequest as any).description,
+      category: (populatedRequest as any).category,
+      justification: (populatedRequest as any).justification,
+      status: (populatedRequest as any).status,
+      submittedAt: (populatedRequest as any).submittedAt.toISOString(),
     };
 
-    return NextResponse.json(newRequest, { status: 201 });
+    return NextResponse.json(formattedRequest, { status: 201 });
   } catch (error) {
     console.error('Error creating request:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

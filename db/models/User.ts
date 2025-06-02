@@ -6,9 +6,7 @@ export interface IUser extends Document {
   role: 'admin' | 'employee';
   companyId?: mongoose.Types.ObjectId;
   departmentId?: mongoose.Types.ObjectId;
-  onboardingCompleted: boolean;
   password: string;
-  inviteCode?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,17 +39,9 @@ const UserSchema = new Schema<IUser>(
       type: Schema.Types.ObjectId,
       ref: 'Department',
     },
-    onboardingCompleted: {
-      type: Boolean,
-      default: false,
-    },
     password: {
       type: String,
       required: true,
-    },
-    inviteCode: {
-      type: String,
-      trim: true,
     },
   },
   {
