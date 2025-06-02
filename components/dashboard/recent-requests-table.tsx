@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Fragment } from "react"
 import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -59,9 +59,8 @@ export function RecentRequestsTable({ isAdmin = true, limit = 5 }: RecentRequest
           </TableHeader>
           <TableBody>
             {sortedRequests.map((request) => (
-              <>
+              <Fragment key={request.id}>
                 <TableRow
-                  key={request.id}
                   className="cursor-pointer hover:bg-muted/50"
                   onClick={() => toggleExpand(request.id)}
                 >
@@ -130,7 +129,7 @@ export function RecentRequestsTable({ isAdmin = true, limit = 5 }: RecentRequest
                     </TableCell>
                   </TableRow>
                 )}
-              </>
+              </Fragment>
             ))}
 
             {sortedRequests.length === 0 && (
