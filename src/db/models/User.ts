@@ -7,6 +7,17 @@ export interface IUser extends Document {
   companyId?: mongoose.Types.ObjectId;
   departmentId?: mongoose.Types.ObjectId;
   password: string;
+  // Enhanced Payman integration fields
+  paymanWalletId?: string;
+  walletCreatedAt?: Date;
+  walletCreationSuccess?: boolean;
+  joinedViaCode?: string;
+  personalWalletConnected?: boolean;
+  personalWalletId?: string;
+  onboardingCompleted: boolean;
+  // Wallet preferences
+  notificationsEnabled: boolean;
+  dailySpendingLimit?: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -43,10 +54,56 @@ const UserSchema = new Schema<IUser>(
       type: String,
       required: true,
     },
+    // Enhanced Payman integration fields
+    paymanWalletId: {
+      type: String,
+      trim: true,
+      index: true,
+    },
+    walletCreatedAt: {
+      type: Date,
+    },
+    walletCreationSuccess: {
+      type: Boolean,
+      default: false,
+    },
+    joinedViaCode: {
+      type: String,
+      trim: true,
+      index: true, // For tracking which company code was used
+    },
+    personalWalletConnected: {
+      type: Boolean,
+      default: false,
+    },
+    personalWalletId: {
+      type: String,
+      trim: true,
+    },
+    onboardingCompleted: {
+      type: Boolean,
+      default: false,
+    },
+    // Wallet preferences
+    notificationsEnabled: {
+      type: Boolean,
+      default: true,
+    },
+    dailySpendingLimit: {
+      type: Number,
+      min: 0,
+      // If not set, will inherit from company default
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Indexes for efficient queries
+UserSchema.index({ email: 1 });
+UserSchema.index({ companyId: 1 });
+UserSchema.index({ paymanWalletId: 1 });
+UserSchema.index({ joinedViaCode: 1 });
 
 export const User = mongoose.models?.User as mongoose.Model<IUser> || mongoose.model<IUser>('User', UserSchema);
