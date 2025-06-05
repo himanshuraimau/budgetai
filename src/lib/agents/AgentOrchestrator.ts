@@ -1,4 +1,5 @@
 import { BaseAgent, AgentRequest, AgentResponse, AgentContext, AgentMetrics, AgentFeedback } from './types';
+import { RequestValidationAgent } from './RequestValidationAgent';
 import { BudgetGuardianAgent } from './BudgetGuardianAgent';
 import { UniversalApprovalAgent } from './UniversalApprovalAgent';
 import { PaymentExecutionAgent } from './PaymentExecutionAgent';
@@ -54,11 +55,13 @@ export class AgentOrchestrator {
    * Initialize all AI agents
    */
   private initializeAgents(): void {
+    const requestValidation = new RequestValidationAgent();
     const budgetGuardian = new BudgetGuardianAgent();
     const universalApproval = new UniversalApprovalAgent();
     const paymentExecution = new PaymentExecutionAgent();
     const smartReimbursement = new SmartReimbursementAgent();
 
+    this.agents.set(requestValidation.id, requestValidation);
     this.agents.set(budgetGuardian.id, budgetGuardian);
     this.agents.set(universalApproval.id, universalApproval);
     this.agents.set(paymentExecution.id, paymentExecution);
@@ -89,9 +92,18 @@ export class AgentOrchestrator {
       requestTypes: ['approval', 'payment'],
       steps: [
         {
+          agentId: 'request-validation',
+          agent: this.agents.get('request-validation')!,
+          required: true
+        },
+        {
           agentId: 'budget-guardian',
           agent: this.agents.get('budget-guardian')!,
-          required: true
+          required: true,
+          condition: (context, results) => {
+            const validationResult = results.find(r => r.agentId === 'request-validation');
+            return validationResult?.decision !== 'deny';
+          }
         },
         {
           agentId: 'universal-approval',

@@ -279,12 +279,12 @@ export class UniversalApprovalAgent extends BaseAgent {
       reasoning = `Strong approval pattern (${(patterns.approvalRate * 100).toFixed(0)}% approval rate) for similar ${request.data.category} requests`;
       suggestedActions = ['Process payment', 'Monitor category spending'];
     }
-    // Conservative approval for smaller amounts
+    // Conservative approval for smaller amounts (but still need business justification)
     else if (amount < 500 && fraudScore < 20) {
       decision = 'approve';
       confidence = 85;
       riskLevel = 'low';
-      reasoning = `Low-risk amount ($${amount}) with minimal fraud indicators`;
+      reasoning = `Low-risk amount ($${amount}) with minimal fraud indicators and valid business purpose`;
       suggestedActions = ['Auto-approve', 'Log for tracking'];
     }
     // Escalate uncertain cases
@@ -295,12 +295,12 @@ export class UniversalApprovalAgent extends BaseAgent {
       reasoning = `Uncertain approval pattern (${(patterns.approvalRate * 100).toFixed(0)}% historical approval) or unusually large amount`;
       suggestedActions = ['Get manager approval', 'Request additional justification'];
     }
-    // Approve threshold cases
+    // Approve threshold cases (only if request passed validation)
     else if (amount < context.companyPolicies.approvalThreshold) {
       decision = 'approve';
       confidence = 80;
       riskLevel = 'low';
-      reasoning = `Amount below approval threshold ($${context.companyPolicies.approvalThreshold}) with acceptable risk profile`;
+      reasoning = `Amount below approval threshold ($${context.companyPolicies.approvalThreshold}) with acceptable risk profile and validated business purpose`;
       suggestedActions = ['Process payment'];
     }
     // Default escalate for safety
