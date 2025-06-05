@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { connectDB } from '@/src/db/config';
-import { Department, User } from '@/src/db/models';
+import { connectDB } from '@/db/config';
+import { Department, User } from '@/db/models';
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     // Find company by join code
-    const { Company } = await import('@/src/db/models');
+    const { Company } = await import('@/db/models');
     const company = await Company.findOne({ joinCode });
     
     if (!company) {

@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useEmployeeAPI } from "@/src/hooks/use-employee-api"
-import type { RequestStatus } from "@/src/types"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
+import type { RequestStatus } from "@/types"
 
 export default function EmployeeRequestsPage() {
   const { requests, departments, isRequestsLoading, isDepartmentsLoading } = useEmployeeAPI()

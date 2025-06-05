@@ -1,5 +1,5 @@
-import { connectDB } from '@/src/db/config';
-import { Company, type ICompany } from '@/src/db/models/Company';
+import { connectDB } from '@/db/config';
+import { Company, type ICompany } from '@/db/models/Company';
 import mongoose from 'mongoose';
 
 /**

@@ -17,8 +17,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useAdminAPI } from "@/src/hooks/use-admin-api"
-import type { Department } from "@/src/types"
+import { useAdminAPI } from "@/hooks/use-admin-api"
+import type { Department } from "@/types"
 
 export default function AdminDepartmentsPage() {
   const { 

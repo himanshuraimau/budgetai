@@ -15,8 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { signOut, useSession } from "next-auth/react"
-import { useCompany } from "@/src/hooks/use-company"
-import { useToast } from "@/src/hooks/use-toast"
+import { useCompany } from "@/hooks/use-company"
+import { useToast } from "@/hooks/use-toast"
 import { ProfileModal } from "@/components/modals/profile-modal"
 import { SettingsModal } from "@/components/modals/settings-modal"
 import { 

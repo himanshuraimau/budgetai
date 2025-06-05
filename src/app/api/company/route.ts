@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { connectDB } from '@/src/db/config';
-import { Company, User } from '@/src/db/models';
+import { connectDB } from '@/db/config';
+import { Company, User } from '@/db/models';
 import { z } from 'zod';
 
 // Create company schema
@@ -53,34 +53,29 @@ export async function POST(request: NextRequest) {
 
       const validatedData = createCompanySchema.parse(body);
       
-      // Generate a simple 6-character join code
-      const joinCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      // Use wallet service to create company with Payman integration
+      const { walletService } = await import('@/lib/services/walletService');
       
-      // Create company
-      const company = new Company({
-        name: validatedData.name,
-        size: validatedData.size,
-        industry: validatedData.industry,
-        adminId: session.user.id,
-        joinCode,
-      });
-
-      await company.save();
+      const result = await walletService.createCompanyWithWallet(
+        validatedData,
+        session.user.id
+      );
 
       // Update user with company
       await User.findByIdAndUpdate(session.user.id, {
-        companyId: company._id,
+        companyId: result.company._id,
       });
 
       return NextResponse.json({
         success: true,
         company: {
-          id: (company as any)._id.toString(),
-          name: company.name,
-          size: company.size,
-          industry: company.industry,
-          joinCode: company.joinCode,
+          id: result.company._id.toString(),
+          name: result.company.name,
+          size: result.company.size,
+          industry: result.company.industry,
+          joinCode: result.companyCode,
         },
+        wallet: result.wallet
       });
     } 
     
@@ -106,7 +101,7 @@ export async function POST(request: NextRequest) {
       // Add department if provided
       if (validatedData.departmentId) {
         // Verify department belongs to this company
-        const { Department } = await import('@/src/db/models');
+        const { Department } = await import('@/db/models');
         const department = await Department.findOne({ 
           _id: validatedData.departmentId, 
           companyId: company._id 

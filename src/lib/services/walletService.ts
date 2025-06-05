@@ -26,6 +26,168 @@ export interface EmployeeOnboardingResult {
 export class WalletService {
   
   /**
+   * Initialize company with main Payman wallet
+   */
+  async initializeCompanyWallet(companyId: string): Promise<string> {
+    try {
+      const company = await Company.findById(companyId);
+      if (!company) {
+        throw new Error('Company not found');
+      }
+      
+      // Get the main wallet from our Payman app
+      const mainWallet = await paymanService.getMainWallet();
+      
+      // Store the main wallet ID in company record
+      await Company.findByIdAndUpdate(companyId, {
+        paymanWalletId: mainWallet.id,
+        walletCreatedAt: new Date(),
+        walletCreationSuccess: true
+      });
+      
+      return mainWallet.id;
+      
+    } catch (error) {
+      console.error('Error initializing company wallet:', error);
+      
+      // Update company with failure status
+      await Company.findByIdAndUpdate(companyId, {
+        walletCreationSuccess: false
+      });
+      
+      throw new Error(`Failed to initialize company wallet: ${error.message}`);
+    }
+  }
+
+  /**
+   * Create test payee for employee
+   */
+  async createEmployeePayee(employeeId: string): Promise<string> {
+    try {
+      const employee = await User.findById(employeeId);
+      if (!employee) {
+        throw new Error('Employee not found');
+      }
+      
+      const company = await Company.findById(employee.companyId);
+      if (!company) {
+        throw new Error('Company not found');
+      }
+      
+      // Create test payee for the employee
+      const payee = await paymanService.createEmployeePayee(
+        employee.name,
+        employee._id.toString(),
+        employee.email
+      );
+      
+      // Store payee ID in employee record
+      await User.findByIdAndUpdate(employeeId, {
+        paymanWalletId: payee.id, // Store payee ID as "wallet" ID for consistency
+        walletCreatedAt: new Date(),
+        walletCreationSuccess: true
+      });
+      
+      return payee.id;
+      
+    } catch (error) {
+      console.error('Error creating employee payee:', error);
+      
+      // Update employee with failure status
+      await User.findByIdAndUpdate(employeeId, {
+        walletCreationSuccess: false
+      });
+      
+      throw new Error(`Failed to create employee payee: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get main wallet balance and details
+   */
+  async getWalletBalance(): Promise<{ balance: number; walletId: string }> {
+    try {
+      const wallet = await paymanService.getMainWallet();
+      return {
+        balance: wallet.balance,
+        walletId: wallet.id
+      };
+    } catch (error) {
+      console.error('Error getting wallet balance:', error);
+      throw new Error(`Failed to get wallet balance: ${error.message}`);
+    }
+  }
+
+  /**
+   * Send payment from main wallet to employee payee
+   */
+  async sendPaymentToEmployee(
+    employeeId: string, 
+    amount: number, 
+    description: string,
+    requestId?: string
+  ): Promise<any> {
+    try {
+      const employee = await User.findById(employeeId);
+      if (!employee || !employee.paymanWalletId) {
+        throw new Error('Employee or payee not found');
+      }
+      
+      // Send payment from main wallet to employee payee
+      const result = await paymanService.sendPayment(
+        employee.paymanWalletId, // This is actually the payee ID
+        amount,
+        description,
+        requestId
+      );
+      
+      return result;
+      
+    } catch (error) {
+      console.error('Error sending payment to employee:', error);
+      throw new Error(`Failed to send payment: ${error.message}`);
+    }
+  }
+
+  /**
+   * List all payees for company
+   */
+  async listCompanyPayees(): Promise<PayeeInfo[]> {
+    try {
+      return await paymanService.listPayees();
+    } catch (error) {
+      console.error('Error listing payees:', error);
+      throw new Error(`Failed to list payees: ${error.message}`);
+    }
+  }
+
+  /**
+   * Setup employee with automatic payee creation during onboarding
+   */
+  async setupEmployeeOnboarding(employeeId: string, companyCode: string): Promise<void> {
+    try {
+      const company = await Company.findOne({ joinCode: companyCode });
+      const employee = await User.findById(employeeId);
+      
+      if (!company || !employee) {
+        throw new Error('Invalid company or employee');
+      }
+      
+      // Ensure company has main wallet initialized
+      if (!company.paymanWalletId) {
+        await this.initializeCompanyWallet(company._id.toString());
+      }
+      
+      // Create payee for employee
+      await this.createEmployeePayee(employeeId);
+      
+    } catch (error) {
+      console.error('Error setting up employee onboarding:', error);
+      throw new Error(`Failed to setup employee: ${error.message}`);
+    }
+  }
+
+  /**
    * Enhanced company creation with automatic wallet setup
    */
   async createCompanyWithWallet(companyData: CompanySetup, adminId: string): Promise<CompanyWithWallet> {
@@ -43,24 +205,24 @@ export class WalletService {
       
       await company.save();
       
-      // Create company wallet via Payman
+      // Initialize with main Payman wallet (simplified approach)
       let walletResult: WalletCreationResult;
       try {
-        const wallet = await paymanService.createCompanyWallet(company.name, company._id.toString());
+        const mainWallet = await paymanService.getMainWallet();
         
-        // Update company with wallet info
-        company.paymanWalletId = wallet.id;
+        // Update company with main wallet info
+        company.paymanWalletId = mainWallet.id;
         company.walletCreatedAt = new Date();
         company.walletCreationSuccess = true;
         await company.save();
         
         walletResult = {
           success: true,
-          walletId: wallet.id
+          walletId: mainWallet.id
         };
         
       } catch (walletError) {
-        console.error('Failed to create company wallet:', walletError);
+        console.error('Failed to initialize company wallet:', walletError);
         
         // Update company with failure info
         company.walletCreationSuccess = false;
@@ -127,14 +289,15 @@ export class WalletService {
       // Create employee wallet via Payman
       let walletResult: WalletCreationResult;
       try {
-        const wallet = await paymanService.createEmployeeWallet(
+        // Create test payee for employee (using simplified approach)
+        const payee = await paymanService.createEmployeePayee(
           employee.name, 
           employee._id.toString(), 
-          company.name
+          employee.email
         );
         
-        // Update employee with wallet info
-        employee.paymanWalletId = wallet.id;
+        // Update employee with payee info
+        employee.paymanWalletId = payee.id; // Store payee ID for reimbursements
         employee.walletCreatedAt = new Date();
         employee.walletCreationSuccess = true;
         employee.onboardingCompleted = true;
@@ -147,17 +310,17 @@ export class WalletService {
         
         // Update audit record
         auditRecord.walletCreationSuccess = true;
-        auditRecord.walletId = wallet.id;
+        auditRecord.walletId = payee.id;
         auditRecord.completedAt = new Date();
         await auditRecord.save();
         
         walletResult = {
           success: true,
-          walletId: wallet.id
+          walletId: payee.id
         };
         
       } catch (walletError) {
-        console.error('Failed to create employee wallet:', walletError);
+        console.error('Failed to create employee payee:', walletError);
         
         // Update employee with failure info
         employee.walletCreationSuccess = false;

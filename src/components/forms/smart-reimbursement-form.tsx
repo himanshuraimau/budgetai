@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useEmployeeAPI } from "@/src/hooks/use-employee-api"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 import { useSession } from "next-auth/react"
 import { 
   Upload,

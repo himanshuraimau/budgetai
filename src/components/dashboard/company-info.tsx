@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Copy, Check, Users, Building } from "lucide-react"
-import { useCompany } from "@/src/hooks/use-company"
-import { useToast } from "@/src/hooks/use-toast"
+import { useCompany } from "@/hooks/use-company"
+import { useToast } from "@/hooks/use-toast"
 
 export function CompanyInfo() {
   const { company, user, isLoading } = useCompany()

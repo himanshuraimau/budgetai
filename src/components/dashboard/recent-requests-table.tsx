@@ -5,8 +5,8 @@ import Link from "next/link"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
-import { useAdminAPI } from "@/src/hooks/use-admin-api"
-import { useEmployeeAPI } from "@/src/hooks/use-employee-api"
+import { useAdminAPI } from "@/hooks/use-admin-api"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 import { ArrowRight } from "lucide-react"
 
 interface RecentRequestsTableProps {

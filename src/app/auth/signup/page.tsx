@@ -11,8 +11,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { useToast } from "@/src/hooks/use-toast"
-import type { UserRole } from "@/src/types"
+import { useToast } from "@/hooks/use-toast"
+import type { UserRole } from "@/types"
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),

@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { useEmployeeAPI } from "@/src/hooks/use-employee-api"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 import { useSession } from "next-auth/react"
 import { 
   CheckCircle, 
@@ -61,6 +61,7 @@ interface AIProcessingState {
     riskFactors: string[]
   }
   insights?: any
+  error?: string
 }
 
 export function EnhancedPurchaseRequestForm() {
@@ -78,7 +79,7 @@ export function EnhancedPurchaseRequestForm() {
   const [estimatedProcessingTime, setEstimatedProcessingTime] = useState(0)
 
   const form = useForm<RequestFormValues>({
-    resolver: zodResolver(requestSchema),
+    resolver: zodResolver(requestSchema) as any,
     defaultValues: {
       amount: "",
       description: "",
@@ -139,7 +140,8 @@ export function EnhancedPurchaseRequestForm() {
       })
 
       if (!response.ok) {
-        throw new Error('Failed to process request')
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to process request')
       }
 
       const result = await response.json()
@@ -151,11 +153,13 @@ export function EnhancedPurchaseRequestForm() {
 
     } catch (error) {
       console.error('AI processing error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
       setAIState(prev => ({
         ...prev,
         isProcessing: false,
         currentAgent: '',
-        progress: 0
+        progress: 0,
+        error: errorMessage
       }))
       throw error
     }
@@ -218,19 +222,19 @@ export function EnhancedPurchaseRequestForm() {
       // Process through AI agents first
       const aiResult = await processWithAI(values)
       
-      // Then submit to traditional system if needed
-      if (aiResult.result.finalDecision === 'escalate') {
-        await submitRequest({
-          amount: Number.parseFloat(values.amount),
-          description: values.description,
-          category: values.category,
-          justification: values.justification || undefined,
-        })
-      }
-
-      // Reset form if successful
+      // Show success message for approved requests
       if (aiResult.result.finalDecision === 'approve') {
+        // Reset form and show success
         form.reset()
+        
+        // Refresh the requests data in the background (if using useEmployeeAPI)
+        if (typeof window !== 'undefined') {
+          // Trigger a page refresh or data refetch after a short delay
+          setTimeout(() => {
+            window.location.reload()
+          }, 3000)
+        }
+        
         setTimeout(() => {
           setAIState({
             isProcessing: false,
@@ -239,11 +243,55 @@ export function EnhancedPurchaseRequestForm() {
             agentResponses: []
           })
           setShowPreview(false)
-        }, 5000) // Keep success state visible for 5 seconds
+        }, 3000) // Keep success state visible for 3 seconds before refreshing
+      }
+      
+      // Handle denied requests
+      else if (aiResult.result.finalDecision === 'deny') {
+        // Keep form data so user can modify and resubmit
+        setTimeout(() => {
+          setAIState(prev => ({
+            ...prev,
+            isProcessing: false,
+            currentAgent: ''
+          }))
+        }, 3000) // Keep denial reason visible for 3 seconds
+      }
+      
+      // Handle escalated requests (save to traditional system)
+      else if (aiResult.result.finalDecision === 'escalate') {
+        // Request is already saved to database by the AI processing endpoint
+        // Just show that it's been escalated for manual review
+        setTimeout(() => {
+          form.reset()
+          setAIState({
+            isProcessing: false,
+            currentAgent: '',
+            progress: 0,
+            agentResponses: []
+          })
+          setShowPreview(false)
+          
+          // Refresh to show the escalated request in the list
+          if (typeof window !== 'undefined') {
+            window.location.reload()
+          }
+        }, 3000)
       }
 
     } catch (error) {
       console.error('Submission error:', error)
+      
+      // Show error state and reset processing
+      setAIState(prev => ({
+        ...prev,
+        isProcessing: false,
+        currentAgent: '',
+        progress: 0
+      }))
+      
+      // You could add error handling UI here
+      alert('Error processing request. Please try again.')
     }
   }
 
@@ -414,6 +462,26 @@ export function EnhancedPurchaseRequestForm() {
                 </div>
               )}
             </Button>
+
+            {/* Error State */}
+            {aiState.error && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  <strong>Processing Error:</strong> {aiState.error}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Connection Error State */}
+            {aiState.currentAgent === '' && !aiState.isProcessing && form.formState.isSubmitted && !aiState.finalDecision && !aiState.error && (
+              <Alert variant="destructive">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  Unable to process request through AI agents. Please check your connection and try again.
+                </AlertDescription>
+              </Alert>
+            )}
           </form>
         </CardContent>
       </Card>
@@ -424,32 +492,59 @@ export function EnhancedPurchaseRequestForm() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Brain className="h-5 w-5 animate-pulse" />
-              AI Agents Processing
+              AI Analysis in Progress
+            </CardTitle>
+            <CardDescription>
+              Current Agent: {aiState.currentAgent}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Progress value={aiState.progress} className="w-full" />
+              <div className="flex items-center justify-between text-sm text-muted-foreground">
+                <span>Processing...</span>
+                <span>{Math.round(aiState.progress)}%</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Agent Responses */}
+      {aiState.agentResponses.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="h-5 w-5" />
+              AI Agent Analysis
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">
-                  Current: {aiState.currentAgent}
-                </span>
-                <span className="text-sm font-medium">{Math.round(aiState.progress)}%</span>
-              </div>
-              <Progress value={aiState.progress} className="w-full" />
-              
               {aiState.agentResponses.map((response, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                  <div className="flex items-center gap-2">
-                    {getDecisionIcon(response.decision)}
-                    <span className="font-medium">{response.agentName}</span>
+                <div key={index} className="border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{response.agentName}</span>
+                      <Badge variant={response.decision === 'approve' ? 'default' : 'secondary'}>
+                        {response.decision}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant="outline" 
+                        className={getRiskBadge(response.riskLevel)}
+                      >
+                        {response.riskLevel} risk
+                      </Badge>
+                      <span className="text-sm text-muted-foreground">
+                        {response.confidence}% confident
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge className={getRiskBadge(response.riskLevel)}>
-                      {response.riskLevel} risk
-                    </Badge>
-                    <span className={`text-sm font-medium ${getDecisionColor(response.decision)}`}>
-                      {response.decision}
-                    </span>
+                  <p className="text-sm text-muted-foreground">{response.reasoning}</p>
+                  <div className="text-xs text-muted-foreground">
+                    Processed in {response.executionTime}ms
                   </div>
                 </div>
               ))}
@@ -458,83 +553,91 @@ export function EnhancedPurchaseRequestForm() {
         </Card>
       )}
 
-      {/* AI Decision Results */}
-      {aiState.finalDecision && !aiState.isProcessing && (
+      {/* Final Decision */}
+      {aiState.finalDecision && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+            <CardTitle className={`flex items-center gap-2 ${getDecisionColor(aiState.finalDecision)}`}>
               {getDecisionIcon(aiState.finalDecision)}
-              AI Decision: {aiState.finalDecision.charAt(0).toUpperCase() + aiState.finalDecision.slice(1)}
+              Final Decision: {aiState.finalDecision.toUpperCase()}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {/* Payment Status */}
-              {aiState.paymentExecuted && (
-                <Alert>
-                  <CheckCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="h-4 w-4" />
-                      Payment executed successfully! Funds transferred via Payman.
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Fraud Risk Assessment */}
-              {aiState.fraudRisk && aiState.fraudRisk.riskScore > 0 && (
-                <Alert variant={aiState.fraudRisk.riskScore > 50 ? "destructive" : "default"}>
-                  <Shield className="h-4 w-4" />
-                  <AlertDescription>
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between">
-                        <span>Fraud Risk Score</span>
-                        <Badge variant={aiState.fraudRisk.riskScore > 50 ? "destructive" : "secondary"}>
-                          {aiState.fraudRisk.riskScore}%
-                        </Badge>
-                      </div>
-                      {aiState.fraudRisk.riskFactors.length > 0 && (
-                        <div className="text-sm">
-                          <span className="font-medium">Risk Factors:</span>
-                          <ul className="list-disc list-inside mt-1">
-                            {aiState.fraudRisk.riskFactors.map((factor, index) => (
-                              <li key={index}>{factor}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Agent Responses Summary */}
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Agent Analysis:</h4>
-                {aiState.agentResponses.map((response, index) => (
-                  <div key={index} className="p-3 bg-muted rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-medium">{response.agentName}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge className={getRiskBadge(response.riskLevel)}>
-                          {response.riskLevel}
-                        </Badge>
-                        <span className={`text-sm ${getDecisionColor(response.decision)}`}>
-                          {response.confidence}% confident
-                        </span>
-                      </div>
-                    </div>
-                    <p className="text-sm text-muted-foreground">{response.reasoning}</p>
-                    <div className="flex items-center gap-1 mt-2">
-                      <Clock className="h-3 w-3" />
-                      <span className="text-xs text-muted-foreground">
-                        {response.executionTime}ms
-                      </span>
-                    </div>
+              {aiState.finalDecision === 'approve' && (
+                <div className="space-y-2">
+                  <Alert className="border-green-200 bg-green-50">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <AlertDescription className="text-green-800">
+                      <strong>Request Approved!</strong> 
+                      {aiState.paymentExecuted && " Payment has been executed automatically."}
+                      {!aiState.paymentExecuted && " Payment processing in progress."}
+                    </AlertDescription>
+                  </Alert>
+                  <div className="text-sm text-muted-foreground">
+                    Your request has been processed and approved. The page will refresh shortly to show your updated request history.
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
+
+              {aiState.finalDecision === 'deny' && (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Request Denied.</strong> Please review the agent feedback above and consider modifying your request.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {aiState.finalDecision === 'escalate' && (
+                <Alert>
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>Request Escalated.</strong> Your request requires manual review and has been forwarded to administrators.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {/* Fraud Risk Display */}
+              {aiState.fraudRisk && (
+                <div className="border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4" />
+                    <span className="font-medium">Security Analysis</span>
+                    <Badge 
+                      variant="outline" 
+                      className={aiState.fraudRisk.riskScore > 70 ? 'bg-red-100 text-red-800' : 
+                                aiState.fraudRisk.riskScore > 40 ? 'bg-yellow-100 text-yellow-800' : 
+                                'bg-green-100 text-green-800'}
+                    >
+                      Risk Score: {aiState.fraudRisk.riskScore}%
+                    </Badge>
+                  </div>
+                  {aiState.fraudRisk.riskFactors?.length > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      <strong>Risk Factors:</strong>
+                      <ul className="list-inside list-disc mt-1">
+                        {aiState.fraudRisk.riskFactors.map((factor, index) => (
+                          <li key={index}>{factor}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Insights */}
+              {aiState.insights && (
+                <div className="border rounded-lg p-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="h-4 w-4" />
+                    <span className="font-medium">AI Insights</span>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {JSON.stringify(aiState.insights, null, 2)}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>

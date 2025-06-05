@@ -53,7 +53,6 @@ const CompanySchema = new Schema<ICompany>(
     paymanWalletId: {
       type: String,
       trim: true,
-      index: true,
     },
     walletCreatedAt: {
       type: Date,

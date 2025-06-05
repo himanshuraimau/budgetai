@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useAdminAPI } from "@/src/hooks/use-admin-api"
-import { RequestStatus } from "@/src/types"
+import { useAdminAPI } from "@/hooks/use-admin-api"
+import { RequestStatus } from "@/types"
 
 export default function AdminRequestsPage() {
   const { 

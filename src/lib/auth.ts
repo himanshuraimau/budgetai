@@ -1,6 +1,6 @@
-import { connectDB } from '@/src/db/config';
-import { User, type IUser } from '@/src/db/models/User';
-import { verifyPassword } from '@/src/utils/password';
+import { connectDB } from '@/db/config';
+import { User, type IUser } from '@/db/models/User';
+import { verifyPassword } from '@/utils/password';
 import mongoose from 'mongoose';
 
 /**

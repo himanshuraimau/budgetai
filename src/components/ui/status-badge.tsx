@@ -1,5 +1,5 @@
-import { cn } from "@/src/lib/utils"
-import type { RequestStatus } from "@/src/types"
+import { cn } from "@/lib/utils"
+import type { RequestStatus } from "@/types"
 
 interface StatusBadgeProps {
   status: RequestStatus

@@ -2,8 +2,8 @@
 
 import { Building2, CreditCard, DollarSign, Users } from "lucide-react"
 import { MetricCard } from "@/components/ui/metric-card"
-import { useAdminAPI } from "@/src/hooks/use-admin-api"
-import { useEmployeeAPI } from "@/src/hooks/use-employee-api"
+import { useAdminAPI } from "@/hooks/use-admin-api"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 
 interface MetricCardsProps {
   isAdmin?: boolean

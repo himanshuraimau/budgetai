@@ -1,7 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
-import type { User } from "@/src/types"
+import type { User } from "@/types"
 
 export function useAuth() {
   const { data: session, status } = useSession()

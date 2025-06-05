@@ -3,7 +3,7 @@ import { Building2, Edit, Users } from "lucide-react"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { BudgetProgress } from "@/components/ui/budget-progress"
 import { Button } from "@/components/ui/button"
-import { useAdminAPI } from "@/src/hooks/use-admin-api"
+import { useAdminAPI } from "@/hooks/use-admin-api"
 import Link from "next/link"
 
 export function DepartmentCards() {

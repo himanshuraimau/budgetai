@@ -79,16 +79,16 @@ Transform your budget management system into an intelligent, autonomous financia
      // Generate company code (existing logic)  
      const companyCode = generateCompanyCode();
      
-     // ✨ NEW: Auto-create company wallet
-     const wallet = await payman.ask(`Create a USD wallet for company ${company.name}`);
+     // ✨ NEW: Initialize with main Payman wallet
+     const mainWallet = await paymanService.getMainWallet();
      
      // Update company with wallet info
      await updateCompany(company.id, {
        joinCode: companyCode,
-       paymanWalletId: wallet.id
+       paymanWalletId: mainWallet.id
      });
      
-     return { company, companyCode, wallet };
+     return { company, companyCode, wallet: mainWallet };
    }
    ```
 
@@ -109,17 +109,19 @@ Transform your budget management system into an intelligent, autonomous financia
        companyId: company.id
      });
      
-     // ✨ NEW: Auto-create employee wallet
-     const wallet = await payman.ask(
-       `Create a TSD wallet for employee ${employee.name} at ${company.name}`
+     // ✨ NEW: Auto-create employee test payee
+     const payee = await paymanService.createEmployeePayee(
+       employee.name,
+       employee._id.toString(),
+       employee.email
      );
      
-     // Link wallet to employee
+     // Link payee to employee
      await updateEmployee(employee.id, {
-       paymanWalletId: wallet.id
+       paymanWalletId: payee.id  // Store payee ID for payments
      });
      
-     return { employee, wallet };
+     return { employee, payee };
    }
    ```
 
@@ -232,228 +234,3 @@ interface AgentResponse {
 3. Funds transfer to employee wallet immediately
 4. Expense recorded in company books
 ```
-
-### 3.3 Zero-Config Budget Management
-- Companies just set budgets in your app
-- AI handles all payment logistics behind scenes
-- Real-time budget tracking across all companies
-- Automated month-end reporting
-
----
-
-## User Experience Flows (Updated)
-
-### Company Admin Journey:
-```
-1. Signs up at yourapp.com
-2. Creates company profile  
-3. ✨ Company wallet + unique code generated automatically
-4. Shares company code with team (email, Slack, etc.)
-5. Monitors employees joining via dashboard
-6. Sets department budgets and policies
-7. Done! Team can start submitting requests
-```
-
-### Employee Journey (Enhanced):
-```
-1. Gets company code from admin/colleague
-2. Signs up with email/password + enters company code
-3. ✨ Instantly connected to company + wallet created
-4. Sees department budget and spending rules
-5. Submits purchase requests immediately
-6. Gets instant AI approvals + payments
-7. Optionally connects personal wallet for reimbursements
-```
-
-### Company Code Validation Flow:
-```typescript
-// Enhanced signup component
-interface EmployeeSignupProps {
-  onSuccess: (employee: User, wallet: PaymanWallet) => void;
-}
-
-async function handleEmployeeSignup(formData: SignUpFormValues & { companyCode: string }) {
-  try {
-    // Validate company code exists
-    const company = await validateCompanyCode(formData.companyCode);
-    
-    // Create employee + wallet in one transaction
-    const result = await onboardEmployeeWithWallet(formData, formData.companyCode);
-    
-    // Apply company policies automatically
-    await applyCompanyPolicies(result.employee.id, formData.companyCode);
-    
-    // Success - employee is ready to use the system
-    onSuccess(result.employee, result.wallet);
-    
-  } catch (error) {
-    // Handle invalid company code or wallet creation failure
-    handleOnboardingError(error);
-  }
-}
-```
-
----
-
-## Technical Implementation (Enhanced)
-
-### Environment Variables (One-Time Setup)
-```bash
-# Your existing Payman app credentials
-PAYMAN_CLIENT_ID=pm-test-pnIQljqD50H3GkdezYbwWF2n
-PAYMAN_CLIENT_SECRET=4cBW8wNd89UF3HkogC3wSzLhGSfBzRaf50F5q1wqXfLcptH6FxtXTGT8AEJbkDpi
-
-# Your app settings
-NEXT_PUBLIC_APP_URL=https://yourapp.com
-DATABASE_URL=mongodb://...
-```
-
-### Database Schema (Updated)
-```typescript
-// Enhanced existing models
-interface Company {
-  // ... existing fields
-  joinCode: string;           // Your existing company code
-  paymanWalletId: string;     // Auto-created wallet
-  walletPolicies: PaymentPolicy[];
-  employeeCount: number;      // Track code-based joins
-  lastEmployeeJoinedAt?: Date;
-}
-
-interface User {
-  // ... existing fields  
-  joinedViaCode: string;      // Track which code they used
-  paymanWalletId: string;     // Auto-created wallet  
-  walletCreatedAt: Date;      // Track wallet creation
-  personalWalletConnected?: boolean;
-  onboardingCompleted: boolean; // Track full onboarding status
-}
-
-interface OnboardingAudit {
-  id: string;
-  companyCode: string;
-  employeeEmail: string;
-  walletCreationSuccess: boolean;
-  walletId?: string;
-  errorMessage?: string;
-  timestamp: Date;
-}
-```
-
-### API Routes (Enhanced)
-```typescript
-// Company management (enhanced)
-POST /api/companies/create           // Creates company + wallet + code
-GET /api/companies/:code/info        // Public info for code validation
-GET /api/companies/:id/employees     // List employees joined via code
-
-// Employee onboarding (enhanced)  
-POST /api/employees/signup           // Signup with company code + wallet creation
-POST /api/employees/validate-code    // Validate company code before signup
-GET /api/employees/:id/wallet        // Get employee wallet info
-
-// Company code specific
-POST /api/company-codes/validate     // Validate company code
-GET /api/company-codes/:code/stats   // Stats for admin dashboard
-POST /api/company-codes/regenerate   // Regenerate company code
-
-// Onboarding monitoring
-GET /api/onboarding/audit           // Track wallet creation success/failures
-POST /api/onboarding/retry-wallet   // Retry failed wallet creation
-```
-
-### Frontend Components (Enhanced)
-```typescript
-// Enhanced signup form with company code
-interface CompanyCodeSignupForm {
-  step1: CompanyCodeValidation;  // Validate code first
-  step2: EmployeeDetails;        // Standard signup fields  
-  step3: WalletCreation;         // Show wallet creation progress
-  step4: PolicyReview;           // Show assigned policies
-  step5: Welcome;                // Welcome to company dashboard
-}
-
-// Company admin dashboard enhancements
-interface CompanyDashboard {
-  companyCode: string;           // Display code prominently
-  newEmployeeFeed: EmployeeJoin[]; // Real-time join notifications
-  walletStats: WalletStatistics; // Success rates, balances
-  policyOverview: PolicySummary; // Applied policies by code
-}
-```
-
----
-
-## Implementation Timeline (Updated)
-
-### Week 1: Company Code + Wallet Integration
-- Integrate wallet creation with existing company code flow
-- Enhanced company creation with automatic wallet setup
-- Employee onboarding with code validation + wallet creation
-
-### Week 2: Enhanced Dashboard & Monitoring  
-- Company admin dashboard for code-based onboarding
-- Real-time employee join notifications
-- Wallet creation audit and retry mechanisms
-
-### Week 3-4: AI Agents  
-- Core approval agents with company code context
-- Cross-company learning while respecting company boundaries
-- Policy enforcement based on company code rules
-
-### Week 5-6: Payment Flows
-- Autonomous request processing with company code permissions
-- Instant reimbursement system respecting company policies
-- Real-time notifications to company code groups
-
-### Week 7-8: Polish & Scale
-- Advanced analytics by company code
-- Bulk operations for company code groups
-- Performance optimization for high-volume code usage
-
----
-
-## Success Metrics (Enhanced)
-
-### Platform Metrics
-- Support unlimited companies with single Payman app
-- 99.9% wallet creation success rate
-- Sub-1-second payment processing
-- Zero manual Payman configuration
-
-### Business Impact Per Company
-- 95% reduction in payment setup time
-- 100% automated wallet management
-- 90% faster employee onboarding
-- Zero technical complexity for users
-
-### Company Code Metrics
-- 99.9% company code validation success rate
-- Sub-3-second employee onboarding (code → wallet → ready)
-- 100% wallet creation success during onboarding
-- Zero failed company code authentications
-
-### Onboarding Experience
-- 95% reduction in admin workload (no manual invites)
-- 90% faster employee setup (self-service)
-- 100% automatic policy application
-- Zero manual wallet setup steps
-
-### Business Impact Per Company
-- Instant team scaling with company codes
-- Self-service employee onboarding
-- Automatic compliance with company policies
-- Real-time visibility into team growth
-
----
-
-## Conclusion
-
-With your existing Payman app, you can create a seamless, zero-configuration experience where:
-
-- ✅ **Companies**: Just sign up and start using - wallets created automatically
-- ✅ **Employees**: Normal app signup - everything works transparently  
-- ✅ **You**: Manage all payments through one Payman app, scale infinitely
-- ✅ **AI Agents**: Learn from all companies, provide better decisions over time
-
-The result: A "cool and agentic" system that's actually **simple to use** but **powerful under the hood**! 

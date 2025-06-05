@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { agentOrchestrator } from '../../../../lib/agents/AgentOrchestrator';
 import { crossCompanyLearning } from '../../../../lib/agents/CrossCompanyLearning';
 import { AgentFeedback } from '../../../../lib/agents/types';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '../../../auth';
+import { auth } from '@/auth';
 import { Company } from '../../../../db/models/Company';
 import { User } from '../../../../db/models/User';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -100,7 +99,7 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -234,7 +233,7 @@ export async function GET(request: NextRequest) {
 // Batch feedback submission
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await auth();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

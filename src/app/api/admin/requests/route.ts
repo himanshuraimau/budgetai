@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
-import { connectDB } from '@/src/db/config';
-import { PurchaseRequest, User } from '@/src/db/models';
+import { connectDB } from '@/db/config';
+import { PurchaseRequest, User } from '@/db/models';
 
 export async function GET(request: NextRequest) {
   try {

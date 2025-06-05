@@ -63,9 +63,9 @@ This documentation covers the implementation of the AI-powered budget management
 3. Employee immediately ready for budget operations
 
 ### Wallet Types
-- **Company Wallets**: USD wallets for business operations
-- **Employee Wallets**: TSD wallets for testing, USD for production
-- **Personal Wallets**: Optional OAuth-connected employee wallets
+- **Main Wallet**: Single TSD wallet from Payman app credentials for all payments  
+- **Employee Payees**: Test payees created for each employee to receive payments
+- **Vendor Payees**: Test payees created for purchase request payments
 
 ### Policy Engine
 - Automatic policy application based on company codes

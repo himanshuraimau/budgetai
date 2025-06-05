@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { walletService } from '../../../../lib/services/walletService';
-import { connectDB } from '../../../../db/config';
-import { auth } from '../../../../../auth';
+import { connectDB } from '@/db/config';
+import { auth } from '@/auth';
+import { Company } from '@/db/models/Company';
+import { User } from '@/db/models/User';
+import { walletService } from '@/lib/services/walletService';
 
 export async function POST(request: NextRequest) {
   try {

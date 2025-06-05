@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { useAdminAPI } from "@/src/hooks/use-admin-api"
+import { useAdminAPI } from "@/hooks/use-admin-api"
 
 // Note: In a real app, we would use a proper charting library like Chart.js or Recharts
 // This is a simplified version for demonstration purposes

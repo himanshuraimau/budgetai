@@ -58,7 +58,6 @@ const UserSchema = new Schema<IUser>(
     paymanWalletId: {
       type: String,
       trim: true,
-      index: true,
     },
     walletCreatedAt: {
       type: Date,
@@ -70,7 +69,6 @@ const UserSchema = new Schema<IUser>(
     joinedViaCode: {
       type: String,
       trim: true,
-      index: true, // For tracking which company code was used
     },
     personalWalletConnected: {
       type: Boolean,
@@ -101,7 +99,6 @@ const UserSchema = new Schema<IUser>(
 );
 
 // Indexes for efficient queries
-UserSchema.index({ email: 1 });
 UserSchema.index({ companyId: 1 });
 UserSchema.index({ paymanWalletId: 1 });
 UserSchema.index({ joinedViaCode: 1 });

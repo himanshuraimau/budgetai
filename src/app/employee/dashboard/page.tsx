@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BudgetProgress } from "@/components/ui/budget-progress"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { useEmployeeAPI } from "@/src/hooks/use-employee-api"
+import { useEmployeeAPI } from "@/hooks/use-employee-api"
 
 export default function EmployeeDashboardPage() {
   const { 

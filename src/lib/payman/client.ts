@@ -1,9 +1,9 @@
 import { PaymanClient } from "@paymanai/payman-ts";
 
 // Initialize the Payman client with credentials
-const paymanClient = PaymanClient.withClientCredentials({
-  clientId: process.env.PAYMAN_CLIENT_ID || "pm-test-pnIQljqD50H3GkdezYbwWF2n",
-  clientSecret: process.env.PAYMAN_CLIENT_SECRET || "4cBW8wNd89UF3HkogC3wSzLhGSfBzRaf50F5q1wqXfLcptH6FxtXTGT8AEJbkDpi",
+const paymanClient = PaymanClient.withCredentials({
+  clientId: process.env.PAYMAN_CLIENT_ID || "",
+  clientSecret: process.env.PAYMAN_CLIENT_SECRET || "",
 });
 
 export interface PaymanWallet {
@@ -33,49 +33,37 @@ export class PaymanService {
   private client = paymanClient;
 
   /**
-   * Create a USD wallet for company operations
+   * Get the main wallet associated with our app credentials
    */
-  async createCompanyWallet(companyName: string, companyId: string): Promise<PaymanWallet> {
+  async getMainWallet(): Promise<PaymanWallet> {
     try {
-      const response = await this.client.ask(
-        `Create a USD wallet named "Company-${companyName}" for business operations`,
-        {
-          metadata: {
-            companyId,
-            walletType: 'company',
-            purpose: 'business_operations'
-          }
-        }
-      );
-
+      const response = await this.client.ask("what's my wallet balance?");
       return this.parseWalletResponse(response);
     } catch (error) {
-      console.error('Error creating company wallet:', error);
-      throw new Error(`Failed to create company wallet: ${error.message}`);
+      console.error('Error getting main wallet:', error);
+      throw new Error(`Failed to get main wallet: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
-   * Create a TSD wallet for employee (test funds for development)
+   * Create a test payee for an employee
    */
-  async createEmployeeWallet(employeeName: string, employeeId: string, companyName: string): Promise<PaymanWallet> {
+  async createEmployeePayee(employeeName: string, employeeId: string, email: string): Promise<PayeeInfo> {
     try {
       const response = await this.client.ask(
-        `Create a TSD wallet named "Employee-${employeeName}" for ${companyName}`,
+        `create a test payee named "${employeeName}" with email ${email}`,
         {
           metadata: {
             employeeId,
-            walletType: 'employee',
-            purpose: 'expense_management',
-            company: companyName
+            purpose: 'employee_reimbursement',
+            type: 'test_payee'
           }
         }
       );
-
-      return this.parseWalletResponse(response);
+      return this.parsePayeeResponse(response);
     } catch (error) {
-      console.error('Error creating employee wallet:', error);
-      throw new Error(`Failed to create employee wallet: ${error.message}`);
+      console.error('Error creating employee payee:', error);
+      throw new Error(`Failed to create employee payee: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -84,49 +72,50 @@ export class PaymanService {
    */
   async listAllWallets(): Promise<PaymanWallet[]> {
     try {
-      const response = await this.client.ask("List all wallets and their balances");
+      const response = await this.client.ask("list all wallets");
       return this.parseWalletsListResponse(response);
     } catch (error) {
       console.error('Error listing wallets:', error);
-      throw new Error(`Failed to list wallets: ${error.message}`);
+      throw new Error(`Failed to list wallets: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Get wallet balance and details
    */
-  async getWalletDetails(walletId: string): Promise<PaymanWallet> {
+  async getWalletDetails(walletId?: string): Promise<PaymanWallet> {
     try {
-      const response = await this.client.ask(
-        `Get details and balance for wallet ${walletId}`
-      );
+      const query = walletId ? 
+        `Get details and balance for wallet ${walletId}` : 
+        "what's my wallet balance?";
+      
+      const response = await this.client.ask(query);
       return this.parseWalletResponse(response);
     } catch (error) {
       console.error('Error getting wallet details:', error);
-      throw new Error(`Failed to get wallet details: ${error.message}`);
+      throw new Error(`Failed to get wallet details: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
    * Create a payee for vendor payments
    */
-  async createPayee(name: string, email: string, type: 'bank' | 'email' | 'test' = 'email'): Promise<PayeeInfo> {
+  async createPayee(name: string, email: string, type: 'test' | 'email' = 'test'): Promise<PayeeInfo> {
     try {
       const response = await this.client.ask(
-        `Create a payee named "${name}" with email ${email} of type ${type}`
+        `create a ${type} payee named "${name}" with email ${email}`
       );
       return this.parsePayeeResponse(response);
     } catch (error) {
       console.error('Error creating payee:', error);
-      throw new Error(`Failed to create payee: ${error.message}`);
+      throw new Error(`Failed to create payee: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   /**
-   * Send payment from company wallet to employee/vendor
+   * Send payment from main wallet to payee
    */
   async sendPayment(
-    fromWalletId: string, 
     toPayeeId: string, 
     amount: number, 
     description: string,
@@ -134,7 +123,7 @@ export class PaymanService {
   ): Promise<any> {
     try {
       const response = await this.client.ask(
-        `Send $${amount} from wallet ${fromWalletId} to payee ${toPayeeId} for ${description}`,
+        `send $${amount} to payee ${toPayeeId} for ${description}`,
         {
           metadata: {
             requestId,
@@ -147,24 +136,7 @@ export class PaymanService {
       return response;
     } catch (error) {
       console.error('Error sending payment:', error);
-      throw new Error(`Failed to send payment: ${error.message}`);
-    }
-  }
-
-  /**
-   * Set up wallet policies for spending limits
-   */
-  async setWalletPolicy(
-    walletId: string, 
-    policy: PaymentPolicy
-  ): Promise<void> {
-    try {
-      await this.client.ask(
-        `Set policy for wallet ${walletId}: daily limit $${policy.dailyLimit}, transaction limit $${policy.transactionLimit}, approval threshold $${policy.approvalThreshold}`
-      );
-    } catch (error) {
-      console.error('Error setting wallet policy:', error);
-      throw new Error(`Failed to set wallet policy: ${error.message}`);
+      throw new Error(`Failed to send payment: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
@@ -173,23 +145,22 @@ export class PaymanService {
    */
   async listPayees(): Promise<PayeeInfo[]> {
     try {
-      const response = await this.client.ask("List all payees");
+      const response = await this.client.ask("list all payees");
       return this.parsePayeesListResponse(response);
     } catch (error) {
       console.error('Error listing payees:', error);
-      throw new Error(`Failed to list payees: ${error.message}`);
+      throw new Error(`Failed to list payees: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
 
   // Helper methods to parse Payman responses
   private parseWalletResponse(response: any): PaymanWallet {
     // Parse the natural language response from Payman
-    // This is a simplified parser - you may need to adjust based on actual Payman responses
     return {
-      id: response.walletId || response.id || 'unknown',
+      id: response.walletId || response.id || 'main-wallet',
       type: response.type || 'TSD',
       balance: response.balance || 0,
-      name: response.name || 'Wallet',
+      name: response.name || 'Main Wallet',
       policies: response.policies || []
     };
   }
@@ -206,7 +177,7 @@ export class PaymanService {
     return {
       id: response.payeeId || response.id || 'unknown',
       name: response.name || 'Unknown',
-      type: response.type || 'email',
+      type: response.type || 'test',
       email: response.email,
       bankAccount: response.bankAccount
     };

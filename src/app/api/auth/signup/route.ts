@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createUser, findUserByEmail } from '@/src/lib/auth';
-import { saltAndHashPassword } from '@/src/utils/password';
+import { createUser, findUserByEmail } from '@/lib/auth';
+import { saltAndHashPassword } from '@/utils/password';
 import { z } from 'zod';
 
 const signupSchema = z.object({

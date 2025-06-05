@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/src/hooks/use-toast"
+import { useToast } from "@/hooks/use-toast"
 
 const signInSchema = z.object({
   email: z.string().email("Please enter a valid email address"),

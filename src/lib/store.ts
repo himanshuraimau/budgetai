@@ -7,7 +7,7 @@ import type {
   PurchaseRequest,
   UserRole,
   RequestStatus,
-} from "@/src/types"
+} from "@/types"
 
 // Auth Store
 interface AuthState {

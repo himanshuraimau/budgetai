@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useSession } from "next-auth/react"
-import { cn } from "@/src/lib/utils"
+import { cn } from "@/lib/utils"
 import { 
   LayoutDashboard, 
   Building2, 
