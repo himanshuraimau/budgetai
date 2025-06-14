@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { agentOrchestrator } from '../../../../lib/agents/AgentOrchestrator';
 import { crossCompanyLearning } from '../../../../lib/agents/CrossCompanyLearning';
 import { AgentRequest, AgentContext } from '../../../../lib/agents/types';
+import { generateDecisionReason } from '../../../../lib/decision-reason-generator';
 import { auth } from '@/auth';
 import { connectDB } from '../../../../db/config';
 import { Company } from '../../../../db/models/Company';
@@ -216,8 +217,25 @@ export async function POST(request: NextRequest) {
       const status = result.finalDecision === 'approve' ? 'approved' : 
                     result.finalDecision === 'deny' ? 'denied' : 'pending';
       
-      // Use the orchestrator's combined reasoning instead of raw concatenation
-      const aiDecisionReason = result.reasoning || `AI Decision: ${result.finalDecision}`;
+      let aiDecisionReason = result.reasoning || `AI Decision: ${result.finalDecision}`;
+
+      // Generate professional decision reason for approved requests using OpenAI
+      if (status === 'approved') {
+        try {
+          const enhancedReason = await generateDecisionReason({
+            amount: savedRequest.amount,
+            description: savedRequest.description,
+            category: savedRequest.category,
+            departmentName: department?.name,
+            employeeName: user.name,
+            finalDecision: 'approved'
+          });
+          aiDecisionReason = enhancedReason;
+        } catch (error) {
+          console.error('Failed to generate enhanced reason:', error);
+          // Fall back to original reasoning if OpenAI fails
+        }
+      }
 
       await PurchaseRequest.findByIdAndUpdate(savedRequest._id, {
         status,

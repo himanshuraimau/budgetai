@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { connectDB } from '@/db/config';
 import { PurchaseRequest, User, Department } from '@/db/models';
+import { generateDecisionReason } from '@/lib/decision-reason-generator';
 
 export async function PUT(
   request: NextRequest,
@@ -22,11 +23,39 @@ export async function PUT(
     await connectDB();
 
     const body = await request.json();
-    const { status, aiDecisionReason } = body;
+    let { status, aiDecisionReason } = body;
     const requestId = (await params).id;
 
     if (!['pending', 'approved', 'denied'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
+    }
+
+    // Get the current request to access its details
+    const currentRequest = await PurchaseRequest.findById(requestId)
+      .populate('employeeId', 'name email')
+      .populate('departmentId', 'name');
+
+    if (!currentRequest) {
+      return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
+
+    // Generate enhanced decision reason for manual approvals/denials
+    if ((status === 'approved' || status === 'denied') && !aiDecisionReason) {
+      try {
+        aiDecisionReason = await generateDecisionReason({
+          amount: currentRequest.amount,
+          description: currentRequest.description,
+          category: currentRequest.category,
+          departmentName: (currentRequest.departmentId as any)?.name,
+          employeeName: (currentRequest.employeeId as any)?.name,
+          finalDecision: status as 'approved' | 'denied'
+        });
+      } catch (error) {
+        console.error('Failed to generate enhanced reason:', error);
+        aiDecisionReason = status === 'approved' 
+          ? 'Approved by administrator' 
+          : 'Denied by administrator';
+      }
     }
 
     // Update request in database
