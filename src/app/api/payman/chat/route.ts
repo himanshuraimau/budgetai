@@ -26,7 +26,12 @@ export async function POST(request: NextRequest) {
     // Format the response for the chatbot
     return NextResponse.json({
       response: formatPaymanResponse(response),
-      metadata: response,
+      // Only include essential metadata, not the full response object
+      metadata: {
+        status: response.status,
+        taskId: response.taskId,
+        timestamp: response.timestamp
+      },
       timestamp: new Date().toISOString()
     })
 
@@ -52,24 +57,12 @@ function formatPaymanResponse(response: any): string {
 
   // If it's an object, try to format it nicely
   if (typeof response === 'object' && response !== null) {
-    // NEW: Handle Payman task response structure
+    // Handle Payman task response structure - extract content from artifacts
     if (response.status && response.artifacts && Array.isArray(response.artifacts)) {
       const artifact = response.artifacts[0]
       if (artifact && artifact.content) {
-        // Extract the main content
-        let content = artifact.content
-        
-        // Add status info if not completed successfully
-        if (response.status !== 'COMPLETED') {
-          content = `⚠️ Status: ${response.status}\n${response.statusMessage || ''}\n\n${content}`
-        }
-        
-        // Add success indicator for completed tasks
-        if (response.status === 'COMPLETED') {
-          content = `✅ ${content}`
-        }
-        
-        return content
+        // Return only the clean content
+        return artifact.content
       }
     }
 
@@ -117,12 +110,18 @@ function formatPaymanResponse(response: any): string {
              `Type: ${response.type || 'N/A'}`
     }
 
-    // Generic object response
-    try {
-      return JSON.stringify(response, null, 2)
-    } catch {
-      return 'Response received but could not format'
+    // If it's a task response but we couldn't extract the content, show an error
+    if (response.status && response.artifacts) {
+      return `⚠️ Response received but content could not be extracted (Status: ${response.status})`
     }
+
+    // Generic fallback - try to extract meaningful content
+    if (response.content) {
+      return response.content
+    }
+
+    // Last resort - show a clean summary instead of raw JSON
+    return `Response received from Payman agent (Status: ${response.status || 'Unknown'})`
   }
 
   // Fallback

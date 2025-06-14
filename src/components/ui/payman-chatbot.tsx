@@ -205,13 +205,6 @@ export function PaymanChatbot({ userContext }: PaymanChatbotProps = {}) {
                           <div className="text-sm whitespace-pre-wrap">
                             {message.content}
                           </div>
-                          {message.metadata && (
-                            <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
-                              <pre className="whitespace-pre-wrap">
-                                {JSON.stringify(message.metadata, null, 2)}
-                              </pre>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="text-xs opacity-50">

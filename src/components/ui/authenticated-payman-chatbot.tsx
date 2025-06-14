@@ -12,5 +12,9 @@ export function AuthenticatedPaymanChatbot() {
   }
 
   // Pass user context to chatbot for personalized experience
-  return <PaymanChatbot userContext={session.user} />
+  return <PaymanChatbot userContext={{
+    id: session.user.id,
+    name: session.user.name ?? undefined,
+    email: session.user.email ?? undefined
+  }} />
 } 
