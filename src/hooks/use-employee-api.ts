@@ -110,9 +110,18 @@ export function useEmployeeAPI() {
   });
 
   // Derived data
-  const userDepartment = session?.user?.departmentId 
-    ? departments.find(dept => dept.id === session.user.departmentId)
-    : departments[0];
+  const userDepartment = (() => {
+    if (!session?.user?.departmentId) {
+      return departments[0]; // Fallback to first department
+    }
+    
+    const foundDept = departments.find(dept => dept.id === session.user.departmentId);
+    if (!foundDept && departments.length > 0) {
+      return departments[0]; // Fallback to first department
+    }
+    
+    return foundDept;
+  })();
 
   const pendingRequestsCount = requests.filter(req => req.status === 'pending').length;
   const approvedRequestsCount = requests.filter(req => req.status === 'approved').length;

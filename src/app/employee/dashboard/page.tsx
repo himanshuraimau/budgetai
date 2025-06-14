@@ -8,11 +8,14 @@ import { BudgetProgress } from "@/components/ui/budget-progress"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { useEmployeeAPI } from "@/hooks/use-employee-api"
+import { useSession } from "next-auth/react"
 
 export default function EmployeeDashboardPage() {
+  const { data: session } = useSession();
   const { 
     requests, 
     userDepartment,
+    departments,
     pendingRequestsCount,
     approvedRequestsCount,
     deniedRequestsCount,
@@ -40,6 +43,14 @@ export default function EmployeeDashboardPage() {
         <div>
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Track your requests and department budget</p>
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-2 text-xs text-gray-500">
+              Status: Session DeptID: {session?.user?.departmentId || 'none'} | 
+              Found Dept: {userDepartment?.name || 'none'} | 
+              Total Depts: {departments?.length || 0} |
+              Loading: {isDepartmentsLoading ? 'yes' : 'no'}
+            </div>
+          )}
         </div>
 
           <Link href="/employee/request">
@@ -136,38 +147,64 @@ export default function EmployeeDashboardPage() {
 
           <div>
             <h2 className="mb-4 text-xl font-semibold">Department Budget</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle>{userDepartment?.name || "Your Department"}</CardTitle>
-                <CardDescription>Monthly budget and current spending</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <div className="mb-2 flex items-baseline justify-between">
-                    <h3 className="text-lg font-medium">Budget Utilization</h3>
-                    <span className="text-sm text-muted-foreground">
-                      ${userDepartment?.currentSpent.toLocaleString()} of $
-                      {userDepartment?.monthlyBudget.toLocaleString()}
-                    </span>
+            {isDepartmentsLoading ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Loading...</CardTitle>
+                  <CardDescription>Fetching department information</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center py-8">
+                    <div className="text-muted-foreground">Loading budget data...</div>
                   </div>
-                  <BudgetProgress
-                    spent={userDepartment?.currentSpent || 0}
-                    budget={userDepartment?.monthlyBudget || 1}
-                    size="lg"
-                  />
-                </div>
+                </CardContent>
+              </Card>
+            ) : !userDepartment ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>No Department Assigned</CardTitle>
+                  <CardDescription>Please contact your administrator</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground">
+                    You need to be assigned to a department to view budget information.
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{userDepartment.name}</CardTitle>
+                  <CardDescription>Monthly budget and current spending</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div>
+                    <div className="mb-2 flex items-baseline justify-between">
+                      <h3 className="text-lg font-medium">Budget Utilization</h3>
+                      <span className="text-sm text-muted-foreground">
+                        ${userDepartment.currentSpent?.toLocaleString() || '0'} of $
+                        {userDepartment.monthlyBudget?.toLocaleString() || '0'}
+                      </span>
+                    </div>
+                    <BudgetProgress
+                      spent={userDepartment.currentSpent || 0}
+                      budget={userDepartment.monthlyBudget || 1}
+                      size="lg"
+                    />
+                  </div>
 
-                <div className="rounded-lg border p-4">
-                  <h3 className="mb-2 text-sm font-medium">Budget Guidelines</h3>
-                  <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
-                    <li>Requests under $100 are typically auto-approved</li>
-                    <li>Include detailed justification for requests over $500</li>
-                    <li>Software purchases require manager approval</li>
-                    <li>Travel expenses must be submitted 2 weeks in advance</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className="rounded-lg border p-4">
+                    <h3 className="mb-2 text-sm font-medium">Budget Guidelines</h3>
+                    <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
+                      <li>Requests under $100 are typically auto-approved</li>
+                      <li>Include detailed justification for requests over $500</li>
+                      <li>Software purchases require manager approval</li>
+                      <li>Travel expenses must be submitted 2 weeks in advance</li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>
