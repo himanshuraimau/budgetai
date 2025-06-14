@@ -1,12 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { MainNav } from "@/components/layout/main-nav"
+import { AdminNav } from "@/components/layout/admin-nav"
 import { UserNav } from "@/components/layout/user-nav"
 import { useSession } from "next-auth/react"
 import { useCompany } from "@/hooks/use-company"
 
-export function DashboardHeader() {
+export function AdminHeader() {
   const { data: session } = useSession()
   const { company } = useCompany()
 
@@ -21,7 +21,7 @@ export function DashboardHeader() {
             <span className="text-lg md:text-2xl font-bold text-emerald-600">BudgetAI</span>
           </Link>
           <div className="hidden sm:block">
-            <MainNav />
+            <AdminNav />
           </div>
         </div>
         <div className="flex items-center gap-3 md:gap-6">
@@ -39,7 +39,7 @@ export function DashboardHeader() {
       
       {/* Mobile Navigation */}
       <div className="sm:hidden border-t bg-background/95 backdrop-blur px-4 py-3">
-        <MainNav className="justify-center" />
+        <AdminNav className="justify-center" />
       </div>
     </header>
   )

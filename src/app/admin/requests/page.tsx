@@ -1,7 +1,6 @@
 "use client"
 
 import React, { useState } from "react"
-import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
@@ -72,14 +71,11 @@ export default function AdminRequestsPage() {
   )
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
-
-      <main className="flex-1 space-y-8 p-8">
-        <div>
-          <h1 className="text-3xl font-bold">Purchase Requests</h1>
-          <p className="text-muted-foreground">Manage and review all purchase requests</p>
-        </div>
+    <div className="space-y-8 p-8">
+      <div>
+        <h1 className="text-3xl font-bold">Purchase Requests</h1>
+        <p className="text-muted-foreground">Manage and review all purchase requests</p>
+      </div>
 
         <div className="flex flex-col gap-4 md:flex-row">
           <div className="flex-1">
@@ -221,7 +217,6 @@ export default function AdminRequestsPage() {
             </Table>
           </div>
         )}
-      </main>
-    </div>
+      </div>
   )
 }

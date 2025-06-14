@@ -1,8 +1,8 @@
 "use client"
 
-import React,{ useState } from "react"
-import { DashboardHeader } from "@/components/layout/dashboard-header"
+import React, { useState } from "react"
 import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -44,14 +44,11 @@ export default function EmployeeRequestsPage() {
   )
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
-
-      <main className="flex-1 space-y-8 p-8">
-        <div>
-          <h1 className="text-3xl font-bold">My Requests</h1>
-          <p className="text-muted-foreground">View and track your purchase requests</p>
-        </div>
+    <div className="space-y-8 p-8">
+      <div>
+        <h1 className="text-3xl font-bold">My Requests</h1>
+        <p className="text-muted-foreground">View and track your purchase requests</p>
+      </div>
 
         <div className="flex flex-col gap-4 md:flex-row">
           <div className="flex-1">
@@ -94,9 +91,8 @@ export default function EmployeeRequestsPage() {
             </TableHeader>
             <TableBody>
               {sortedRequests.map((request) => (
-                <>
+                <React.Fragment key={request.id}>
                   <TableRow
-                    key={request.id}
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => toggleExpand(request.id)}
                   >
@@ -136,7 +132,7 @@ export default function EmployeeRequestsPage() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               ))}
 
               {sortedRequests.length === 0 && (
@@ -150,7 +146,7 @@ export default function EmployeeRequestsPage() {
           </Table>
         </div>
         )}
-      </main>
-    </div>
+      </div>
+    
   )
 }

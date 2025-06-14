@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { Plus, Edit, Trash2 } from "lucide-react"
-import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -83,15 +82,12 @@ export default function AdminDepartmentsPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
-
-      <main className="flex-1 space-y-8 p-8">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Departments</h1>
-            <p className="text-muted-foreground">Manage your company's departments and budgets</p>
-          </div>
+    <div className="space-y-8 p-8">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Departments</h1>
+          <p className="text-muted-foreground">Manage your company's departments and budgets</p>
+        </div>
 
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
@@ -309,7 +305,6 @@ export default function AdminDepartmentsPage() {
             )}
           </>
         )}
-      </main>
-    </div>
+      </div>
   )
 }

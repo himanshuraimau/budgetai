@@ -2,7 +2,6 @@
 
 import { PlusCircle } from "lucide-react"
 import Link from "next/link"
-import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BudgetProgress } from "@/components/ui/budget-progress"
@@ -36,15 +35,12 @@ export default function EmployeeDashboardPage() {
     .slice(0, 5)
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
-
-      <main className="flex-1 space-y-8 p-8">
-        <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">Track your requests and department budget</p>
-          </div>
+    <div className="space-y-8 p-8">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">Track your requests and department budget</p>
+        </div>
 
           <Link href="/employee/request">
             <Button>
@@ -174,7 +170,6 @@ export default function EmployeeDashboardPage() {
             </Card>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
   )
 }

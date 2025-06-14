@@ -1,6 +1,5 @@
 "use client"
 
-import { DashboardHeader } from "@/components/layout/dashboard-header"
 import { EnhancedPurchaseRequestForm } from "@/components/forms/enhanced-purchase-request-form"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { BudgetProgress } from "@/components/ui/budget-progress"
@@ -10,16 +9,13 @@ export default function RequestPage() {
   const { userDepartment, isDepartmentsLoading } = useEmployeeAPI()
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <DashboardHeader />
-
-      <main className="flex-1 space-y-8 p-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">New Purchase Request</h1>
-          <p className="text-muted-foreground">
-            Submit a purchase request for instant AI analysis and approval
-          </p>
-        </div>
+    <div className="space-y-8 p-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">New Purchase Request</h1>
+        <p className="text-muted-foreground">
+          Submit a purchase request for instant AI analysis and approval
+        </p>
+      </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2">
@@ -71,7 +67,6 @@ export default function RequestPage() {
             </Card>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
   )
 }
