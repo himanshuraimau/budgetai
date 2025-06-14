@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAdminAPI } from "@/hooks/use-admin-api"
+import { formatDecisionReason } from "@/lib/agent-utils"
 import { RequestStatus } from "@/types"
 
 export default function AdminRequestsPage() {
@@ -191,7 +192,7 @@ export default function AdminRequestsPage() {
                             )}
                             {request.aiDecisionReason && (
                               <div>
-                                <span className="font-medium">AI Decision:</span> {request.aiDecisionReason}
+                                <span className="font-medium">AI Decision:</span> {formatDecisionReason(request.aiDecisionReason)}
                               </div>
                             )}
                             {request.processedAt && (

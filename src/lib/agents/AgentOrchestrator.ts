@@ -273,10 +273,47 @@ export class AgentOrchestrator {
    * Generate combined reasoning from all agent responses
    */
   private generateCombinedReasoning(responses: AgentResponse[]): string {
-    const reasonings = responses.map(response => 
-      `${response.agentId}: ${response.reasoning}`
-    );
-    return reasonings.join(' | ');
+    if (responses.length === 0) return 'No agent responses available';
+    
+    // Get the primary decision maker (usually the approval agent or the last successful agent)
+    const primaryAgent = responses.find(r => r.decision === 'approve' || r.decision === 'deny') || responses[responses.length - 1];
+    
+    // Create a clean, summarized reasoning
+    const agentNames: Record<string, string> = {
+      'request-validation': 'Validation',
+      'budget-guardian': 'Budget Analysis',
+      'universal-approval': 'Approval Decision',
+      'payment-execution': 'Payment Processing',
+      'smart-reimbursement': 'Reimbursement Processing'
+    };
+    
+    // Start with primary decision
+    let summary = primaryAgent.reasoning;
+    
+    // Add key insights from other agents if they have important information
+    const otherInsights: string[] = [];
+    
+    responses.forEach(response => {
+      if (response.agentId === primaryAgent.agentId) return;
+      
+      const agentName = agentNames[response.agentId] || response.agentId;
+      
+      // Only add critical insights, not routine validations
+      if (response.decision === 'deny') {
+        otherInsights.push(`${agentName}: ${response.reasoning}`);
+      } else if (response.riskLevel === 'high' || response.riskLevel === 'critical') {
+        otherInsights.push(`${agentName}: High risk detected - ${response.reasoning}`);
+      } else if (response.suggestedActions && response.suggestedActions.length > 0) {
+        otherInsights.push(`${agentName}: Suggests ${response.suggestedActions[0]}`);
+      }
+    });
+    
+    // Combine into readable format
+    if (otherInsights.length > 0) {
+      summary += `. Additional insights: ${otherInsights.join('; ')}`;
+    }
+    
+    return summary;
   }
 
   /**

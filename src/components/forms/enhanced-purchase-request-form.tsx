@@ -15,6 +15,7 @@ import { Progress } from "@/components/ui/progress"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useEmployeeAPI } from "@/hooks/use-employee-api"
 import { useSession } from "next-auth/react"
+import { getAgentDisplayName } from "@/lib/agent-utils"
 import { 
   CheckCircle, 
   XCircle, 
@@ -203,16 +204,6 @@ export function EnhancedPurchaseRequestForm() {
       fraudRisk: result.fraudRisk,
       insights: result.insights
     }))
-  }
-
-  const getAgentDisplayName = (agentId: string): string => {
-    const names = {
-      'budget-guardian': 'Budget Guardian',
-      'universal-approval': 'Universal Approval',
-      'payment-execution': 'Payment Execution',
-      'smart-reimbursement': 'Smart Reimbursement'
-    }
-    return names[agentId as keyof typeof names] || agentId
   }
 
   const onSubmit = async (values: RequestFormValues) => {

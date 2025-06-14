@@ -67,7 +67,7 @@ export class RequestValidationAgent extends BaseAgent {
         agentId: this.id,
         decision: 'approve',
         confidence: 95,
-        reasoning: 'Request passed all validation checks: legitimate business expense, properly categorized, clear business purpose',
+        reasoning: 'Request validated successfully - legitimate business expense with proper categorization',
         riskLevel: 'low',
         executionTime: Date.now() - startTime
       };

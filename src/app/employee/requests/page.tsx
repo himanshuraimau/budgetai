@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/ui/status-badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useEmployeeAPI } from "@/hooks/use-employee-api"
+import { formatDecisionReason } from "@/lib/agent-utils"
 import type { RequestStatus } from "@/types"
 
 export default function EmployeeRequestsPage() {
@@ -120,7 +121,7 @@ export default function EmployeeRequestsPage() {
                           )}
                           {request.aiDecisionReason && (
                             <div>
-                              <span className="font-medium">Decision Reason:</span> {request.aiDecisionReason}
+                              <span className="font-medium">Decision Reason:</span> {formatDecisionReason(request.aiDecisionReason)}
                             </div>
                           )}
                           {request.processedAt && (

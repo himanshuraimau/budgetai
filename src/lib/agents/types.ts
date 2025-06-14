@@ -113,6 +113,7 @@ export abstract class BaseAgent {
 }
 
 export interface AgentFeedback {
+  outcome: any;
   requestId: string;
   request: AgentRequest; // Include full request for pattern analysis
   actualOutcome: 'correct' | 'incorrect' | 'partial';

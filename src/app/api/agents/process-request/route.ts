@@ -216,9 +216,8 @@ export async function POST(request: NextRequest) {
       const status = result.finalDecision === 'approve' ? 'approved' : 
                     result.finalDecision === 'deny' ? 'denied' : 'pending';
       
-      const aiDecisionReason = result.agentResponses
-        ?.map(r => `${r.agentId}: ${r.reasoning}`)
-        .join('; ') || `AI Decision: ${result.finalDecision}`;
+      // Use the orchestrator's combined reasoning instead of raw concatenation
+      const aiDecisionReason = result.reasoning || `AI Decision: ${result.finalDecision}`;
 
       await PurchaseRequest.findByIdAndUpdate(savedRequest._id, {
         status,

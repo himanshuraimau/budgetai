@@ -116,11 +116,7 @@ export class PaymanService {
    * Send payment from main wallet to payee
    */
   async sendPayment(
-    toPayeeId: string, 
-    amount: number, 
-    description: string,
-    requestId?: string
-  ): Promise<any> {
+toPayeeId: string, id: string, amount: number, description: string, requestId?: string  ): Promise<any> {
     try {
       const response = await this.client.ask(
         `send $${amount} to payee ${toPayeeId} for ${description}`,

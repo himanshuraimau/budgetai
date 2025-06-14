@@ -28,7 +28,7 @@ export class PaymentExecutionAgent extends BaseAgent {
           agentId: this.id,
           decision: 'deny',
           confidence: 99,
-          reasoning: 'Can only execute pre-approved payment requests',
+          reasoning: 'Payment execution requires pre-approved requests only',
           riskLevel: 'medium',
           executionTime: Date.now() - startTime
         };
