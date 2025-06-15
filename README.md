@@ -1,4 +1,4 @@
-# 🤖 BudgetAI - Intelligent Budget Management Platform
+# BudgetAI - Intelligent Budget Management Platform
 
 > **AI-powered budget management with autonomous financial decision-making and programmable payments**
 
